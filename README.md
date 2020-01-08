@@ -1,12 +1,20 @@
 # rebalanceamento_acoes
-Script para fazer o rebalanceamento de uma carteira de ações focada no Buy and Hold
+Script para fazer o rebalanceamento e investimento através de um aporte em uma carteira de ações focada no Buy and Hold.
 
-O rebalanceamento é feito da seguinte forma:
-1. Os ativos são ordenados por atraso em relação à porcentagem definida e maior cotação
-2. Para cada ativo, são selecionadas n ações (considerando a porcentagem definida)
-3. O processo é refeito até naõ ser possível comprar mais com o aporte definido
+## Rebalanceamento
+
+O rebalanceamento prioriza:
+1. o maior atraso em relação à porcentagem automaticamente definida (100/número de ações), aplicada sobre o total da carteira (desconsiderando aporte) 
+2. maior cotação
+
+Para cada ativo, o script tenta atingir essa porcentagem (caso esteja atrasado) ou pelo menos comprar 1 ativo.
+
+## Investimento
+
+O investimento é feito com o restante do aporte, após um rebalanceamento que concluído com sucesso (compra de todos os ativos atrasados).
+Nele, apenas a maior cotação é utilizada como meio de ordenação e a porcentagem é aplicada apenas no restante do aporte.
+Similar ao rebalanceamento, o objetivo é comprar pelo menos 1 ação de cada ativo.
 
 ## Instruções
-1. Editar o arquivo wallet.csv com as quantidades, porcentagens e Tickets da sua carteira de ações
-2. Colocar o valor do aporte na linha 14 em main.py 
-3. Executar o script
+1. Editar o arquivo main.py com o valor do aporte (capital), cpf (cpf), senha do CEI (password) e código da corretora (cod) disponíveis nas linhas 16-20
+2. Executar o script em uma IDE que suporta IPython (Spyder, por exemplo) 
