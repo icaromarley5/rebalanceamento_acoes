@@ -17,4 +17,4 @@ Similar ao rebalanceamento, o objetivo é comprar pelo menos 1 ação de cada at
 
 ## Instruções
 1. Editar o arquivo main.py com o valor do aporte (capital), cpf (cpf), senha do CEI (password) e código da corretora (cod) disponíveis nas linhas 16-20
-2. Executar o script em uma IDE que suporta IPython (Spyder, por exemplo) 
+2. Executar o script em uma IDE que suporta o console IPython (Spyder, por exemplo). A execução inteira demora pouco menos que um minuto.
