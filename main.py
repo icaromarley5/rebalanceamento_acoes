@@ -21,7 +21,7 @@ cod = ''# código corretora
 
 df = pd.DataFrame(get_cei_data(cpf,password,cod))
 
-df['Preço'] = get_tickets_price(df['Ticket'].values)
+df['Preço'] = df['Ticket'].apply(get_tickets_price)
 df['Valor'] = df['Preço'] * df['Quantidade']
 df['% atual'] = df['Valor']*100/df['Valor'].sum()
 df['% alvo'] = 100/df.shape[0]
@@ -36,7 +36,7 @@ for i,row in df.iterrows():
     # rebalanceamento
     # tenta deixar todos os ativos com o % planejado
     
-    target_value = (df['Valor'].sum() + capital) * row['% alvo']/100
+    target_value = df['Valor'].sum() * row['% alvo']/100
     if row['Valor'] < target_value: 
         # se aporte é suficiente para rebalancear ativos com percentuais maiores
         if row['Preço'] + row['Valor'] <= target_value:
