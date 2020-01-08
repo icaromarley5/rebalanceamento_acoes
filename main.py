@@ -4,85 +4,121 @@ Created on Tue Nov 19 09:47:31 2019
 
 @author: icaromarley5
 """
-import requests
-from bs4 import BeautifulSoup
+
 import matplotlib.pyplot as plt
+import seaborn as sns
 import pandas as pd
+from crawlers import get_cei_data, get_tickets_price
 import warnings
 warnings.filterwarnings("ignore")
 
-capital = 100
+# para preencher
+capital = 0 # valor do aporte
 
-info_url = 'https://www.fundamentus.com.br/detalhes.php?papel='
-df = pd.read_csv('wallet.csv')
+cpf = '' # cpf
+password = '' # senha cei
+cod = ''# código corretora
 
-def get_data(row):
-    r = requests.get(info_url+row['Ticket'])
-    return BeautifulSoup(r.text)
-df['Dados'] = df.apply(get_data,axis=1)
+df = pd.DataFrame(get_cei_data(cpf,password,cod))
 
-def get_price(soup):
-    return float(soup.find('td',{'class':'data destaque w3'}).span.text.replace(',','.')) 
-
-df['Preço'] = df['Dados'].apply(get_price)
+df['Preço'] = get_tickets_price(df['Ticket'].values)
 df['Valor'] = df['Preço'] * df['Quantidade']
 df['% atual'] = df['Valor']*100/df['Valor'].sum()
+df['% alvo'] = 100/df.shape[0]
 
-def get_vpa(soup):   
-    return float(soup.find('span',{'class':'txt'},text='VPA').findNext('td').text.replace(',','.'))
-df['Vpa'] = df['Dados'].apply(get_vpa)
-
-del df['Dados']
-
+# rebalanceamento e investimentos
 df['Quantidade para comprar'] = 0
 non_allocated_capital = capital
-df['% planejada'] = df['% atual']
-df['Valor planejado'] = df['Valor']
-while True:
-    df['bought'] = False
-    non_allocated_capital_old = non_allocated_capital
-    while True:
-        df['distance'] = (df['% alvo'] - df['% planejada']).abs()
-        df.sort_values('Preço',ascending=False,inplace=True)
-        df.sort_values('distance',ascending=False,inplace=True)
-        non_bought = df[df['bought']==False]
-        
-        if not non_bought.empty:
-            row = non_bought.iloc[0]
-            
-            if row['Preço'] <= non_allocated_capital:
-                
-                target_value = (df['Valor planejado'].sum() + capital) * row['% alvo']/100
-                if target_value > row['Valor planejado']:
-                    target_quant = target_value//row['Preço'] - row['Quantidade'] - row['Quantidade para comprar']
+wait_for = None
+df['distance'] = (df['% alvo'] - df['% atual']).abs()
+df.sort_values(['distance','Preço'],ascending=False,inplace=True)
+for i,row in df.iterrows():
+    # rebalanceamento
+    # tenta deixar todos os ativos com o % planejado
     
-                    quant = non_allocated_capital//row['Preço']
-                                     
-                    if quant > target_quant:
-                        quant = target_quant
-                                            
-                    non_allocated_capital -= row['Preço'] * quant
-                    df.loc[row.name,'Quantidade para comprar'] += quant
+    target_value = (df['Valor'].sum() + capital) * row['% alvo']/100
+    if row['Valor'] < target_value: 
+        # se aporte é suficiente para rebalancear ativos com percentuais maiores
+        if row['Preço'] + row['Valor'] <= target_value:
+            # compre ate atingir o target value
+            quant = (target_value-row['Valor'])//row['Preço']
+        else:
+            # aporte insuficiente para manter rebalanceamento
+            if row['Preço'] < non_allocated_capital:
+                # compre pelo menos 1
+                quant = 1  
+            else:
+                # aporte insuficiente para comprar pelo menos uma ação
+                wait_for = row['Ticket']
+                break            
+        non_allocated_capital -= row['Preço'] * quant
+        df.loc[row.name,'Quantidade para comprar'] = quant
+del df['distance']
 
-            df.loc[row.name,'bought'] = True 
-        else:break
-    
-    df['Valor planejado'] = (df['Quantidade']+df['Quantidade para comprar']) * df['Preço']
-    df['% planejada'] = df['Valor planejado']*100/df['Valor planejado'].sum()
+# Plot de balanceamento    
+df['Valor planejado'] = (df['Quantidade']+df['Quantidade para comprar']) * df['Preço']
+df['% planejada'] = df['Valor planejado']*100/df['Valor planejado'].sum()
 
-    if non_allocated_capital == non_allocated_capital_old:
-        break
-del df['bought'],df['distance']
-
-ax = df.set_index('Ticket').sort_index()[['% atual','% planejada','% alvo']].plot(kind='bar',figsize=(9,5))
-plt.title('Carteira')
+ax = df.set_index('Ticket').sort_index()[['% atual','% planejada']].plot(kind='bar',figsize=(9,5),stacked=False)
+plt.title('Carteira balanceada')
 ax.legend(loc='center left', bbox_to_anchor=(1, 0.95))
 plt.show()
 
-print('PL atual: R$ {:.2f}'.format((df['Vpa']*df['Quantidade']).sum()))
-print('PL planejado: R$ {:.2f}'.format((df['Vpa']*(df['Quantidade']+df['Quantidade para comprar'])).sum()))
-print('Capital não alocado: R$ {:.2f}'.format(non_allocated_capital))
+
+if wait_for: 
+    print('Aporte é insuficiente para rebalancear a carteira')
+else:
+    print('Rebalanceamento processado com sucesso')
+    # rebalanceamento concluído com sucesso
+    # tenta alocar o dinheiro restante
+    # prioridade: ação com maior preço
+    
+    new_capital = non_allocated_capital
+    df.sort_values('Preço',ascending=False,inplace=True)
+    
+    for i,row in df.iterrows():
+        quant = 0
+        target_value = new_capital * row['% alvo']/100
+        
+        if row['Preço'] > target_value: 
+            # não sobrou dinheiro suficiente para comprar o ativo
+            # compra pelo menos uma
+            if row['Preço'] <= non_allocated_capital:
+                quant = 1
+            else:
+                print('Restante do aporte é insuficiente para comprar ações mais caras')
+                wait_for = row['Ticket']
+                break
+        else:
+            # compra ações até a % alvo
+            quant = (target_value)//row['Preço']
+            
+        non_allocated_capital -= row['Preço'] * quant
+        df.loc[row.name,'Quantidade para comprar'] += quant
+   
+
+# Plot de balanceamento    
+df['Valor planejado'] = (df['Quantidade']+df['Quantidade para comprar']) * df['Preço']
+df['% planejada'] = df['Valor planejado']*100/df['Valor planejado'].sum()
+
+ax = df.set_index('Ticket').sort_index()[['% atual','% planejada']].plot(kind='bar',figsize=(9,5),stacked=False)
+plt.title('Carteira balanceada após investimentos')
+ax.legend(loc='center left', bbox_to_anchor=(1, 0.95))
+plt.show()
+
+# Plot de alocação de capital
+allocated_capital = capital-non_allocated_capital
+ax = pd.DataFrame({'Valores':[non_allocated_capital,allocated_capital]},
+                  index=['Não alocado','Alocado']).plot(kind='pie',y='Valores',labels=None,
+                        autopct=lambda p: '{:.2f}%'.format(p))
+ax.set_ylabel('')
+plt.title('Capital não alocado: R$ {:.2f}'.format(non_allocated_capital))   
+plt.show()
+
 print()
 print('Quantidade de ações para comprar com R$ {:.2f} por Ticket:'.format(capital))
 for _,row in df[df['Quantidade para comprar']>0].iterrows():
     print('\t{}: {:.0f}'.format(row['Ticket'],row['Quantidade para comprar'])) 
+print()
+if wait_for:
+    print('Recomendação: juntar $ para comprar mais ações de',wait_for)
