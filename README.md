@@ -21,11 +21,18 @@ Similar ao rebalanceamento, o objetivo é comprar pelo menos 1 ação de cada at
 
 
 ## Saída esperada
-* Gráfico de balanceamento de ativos na carteira: mostra o balanceamento antes e depois do planejamento
-![Alt text](imgs/carteira.jpg?raw=true "Balanceamento de ativos (exemplo)")
-* Gráfico de fator de desbalanceamento: compara um índice de desbalanceamento (soma das diferenças da % atual do ativo na carteira e a % alvo) antes e depois do planejamento
-![Alt text](imgs/fator.jpg?raw=true "Fator de desbalanceamento (exemplo)")
-* Gráfico de alocação de capital: mostra qual percentual do aporte foi alocado
-![Alt text](imgs/alocacao.jpg?raw=true "Alocação (exemplo)")
 * Recomendações de ativos para comprar
-![Alt text](imgs/recomendacao.jpg?raw=true "Recomendação (exemplo)")
+
+![Imagem das recomendações](imgs/recomendacao.JPG)
+
+* Gráfico de balanceamento de ativos na carteira: mostra o balanceamento antes e depois do planejamento
+
+![Imagem do balanceamento de ativos da carteira](imgs/carteira.JPG)
+
+* Gráfico de fator de desbalanceamento: compara um índice de desbalanceamento (soma das diferenças da % atual do ativo na carteira e a % alvo) antes e depois do planejamento
+
+![Imagem do fator de desbalanceamento](imgs/fator.JPG)
+
+* Gráfico de alocação de capital: mostra qual percentual do aporte foi alocado
+
+![Imagem da alocação do aporte](imgs/alocacao.JPG)
