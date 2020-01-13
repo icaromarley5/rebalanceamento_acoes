@@ -12,8 +12,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
-from bs4 import BeautifulSoup
-import requests
+import re
 
 def get_browser():
     #chrome_options = Options()
@@ -74,15 +73,25 @@ def get_cei_data(cpf,password,cod):
     
     return data
 
-
-def get_tickets_price(ticket):
-    price = 0
-    ticket = ticket[:-1] if ticket[-1] == 'F' else ticket
-    ticket = ticket.replace('NTCO','NATU')
-    url = 'https://www.fundamentus.com.br/detalhes.php?papel={}'.format(ticket)
+def get_tickets_price(ticket_list):
+    
+    browser = get_browser()
+    
+    prices = []
+    
     try:
-        r = requests.get(url)
-        price = float(BeautifulSoup(r.text).find('td',{'class':'data destaque w3'}).span.text.replace(',','.')) 
+        for ticket in ticket_list:
+            
+            ticket = ticket[:-1] if ticket[-1] == 'F' else ticket
+            ticket = ticket.lower()
+            
+            url = 'http://www.grafbolsa.net/cgi-bin/al.pl/' + ticket
+            browser.get(url)
+            text = browser.find_element_by_xpath('//font[contains(text(), "Venda = ")]').text
+            prices.append(float(text.split('Venda = ')[1].strip()))
     except Exception as e:
         print(e)
-    return price
+    finally:
+        browser.quit()
+        
+    return prices
