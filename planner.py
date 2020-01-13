@@ -12,7 +12,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 def generate_plan(cpf,password,cod,capital):
-    print('AVISO: carregando dados da internet (CEI + Fundamentus), aguarde...')
+    print('AVISO: carregando dados da internet, aguarde...')
     
     df = pd.DataFrame(get_cei_data(cpf,password,cod))
     
