@@ -18,3 +18,14 @@ Similar ao rebalanceamento, o objetivo é comprar pelo menos 1 ação de cada at
 ## Instruções
 1. Editar o arquivo main.py com o valor do aporte (capital), cpf (cpf), senha do CEI (password) e código da corretora (cod) disponíveis nas linhas 16-20
 2. Executar o script em uma IDE que suporta o console IPython (Spyder, por exemplo). A execução inteira demora pouco menos que um minuto.
+
+
+## Saída esperada
+* Gráfico de balanceamento de ativos na carteira: mostra o balanceamento antes e depois do planejamento
+![Alt text](imgs/carteira.jpg?raw=true "Balanceamento de ativos (exemplo)")
+* Gráfico de fator de desbalanceamento: compara um índice de desbalanceamento (soma das diferenças da % atual do ativo na carteira e a % alvo) antes e depois do planejamento
+![Alt text](imgs/fator.jpg?raw=true "Fator de desbalanceamento (exemplo)")
+* Gráfico de alocação de capital: mostra qual percentual do aporte foi alocado
+![Alt text](imgs/alocacao.jpg?raw=true "Alocação (exemplo)")
+* Recomendações de ativos para comprar
+![Alt text](imgs/recomendacao.jpg?raw=true "Recomendação (exemplo)")
