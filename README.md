@@ -16,7 +16,7 @@ Nele, apenas a maior cotação é utilizada como meio de ordenação e a porcent
 Similar ao rebalanceamento, o objetivo é comprar pelo menos 1 ação de cada ativo.
 
 ## Instruções
-1. Editar o arquivo main.py com o valor do aporte (capital), cpf (cpf), senha do CEI (password) e código da corretora (cod) disponíveis nas linhas 16-20
+1. Editar o arquivo main.py com o valor do aporte (capital), cpf (cpf) e senha do CEI (password) disponíveis nas linhas 16-20
 2. Executar o script em uma IDE que suporta o console IPython (Spyder, por exemplo). A execução inteira demora pouco menos que um minuto.
 
 
