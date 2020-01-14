@@ -21,14 +21,14 @@ def get_browser():
     
 def get_cei_data(cpf,password):
     data = {
-        'Ticket':[],
+        'Ticker':[],
         'Quantidade':[],
     }
     
     browser = get_browser()
    
     try:
-        url = 'https://cei.b3.com.br/CEI_Responsivo/negociacao-de-ativos.aspx'
+        url = 'https://cei.b3.com.br/CEI_Responsivo/home.aspx'
         browser.get(url)
         
         inputElement = browser.find_element_by_id(
@@ -38,31 +38,33 @@ def get_cei_data(cpf,password):
                 "ctl00_ContentPlaceHolder1_txtSenha")
         inputElement.send_keys(password)
         inputElement.send_keys(Keys.RETURN)
-        
-        #import pdb;pdb.set_trace()
-        WebDriverWait(browser, 15).until(lambda driver:
-            driver.current_url==
+           
+        WebDriverWait(browser, 15).until(lambda browser:
+            browser.current_url==
                 'https://cei.b3.com.br/CEI_Responsivo/home.aspx')           
+        
+        
         url = 'https://cei.b3.com.br/CEI_Responsivo/'\
             'ConsultarMovimentoCustodia.aspx?TP_VISUALIZACAO=1'
         browser.get(url)
- 
+        
         tbody = browser.find_element_by_tag_name('table')\
             .find_element_by_tag_name('tbody')
-            
+        
         for tr in tbody.find_elements_by_tag_name('tr'):
             td_list = tr.find_elements_by_tag_name('td')
-            data['Ticket'].append(td_list[2].text.strip())
+            data['Ticker'].append(td_list[2].text.strip())
             data['Quantidade'].append(int(td_list[5].text.strip()))
                 
     except Exception as e:
         print(e)
+        raise e
     finally:
         browser.quit()
     
     return data
 
-def get_tickets_price(ticket_list):    
+def get_tickers_price(ticker_list):    
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1)'\
             ' AppleWebKit/537.36 (KHTML, like Gecko)'\
@@ -70,8 +72,8 @@ def get_tickets_price(ticket_list):
     }
     prices = []
     regex = re.compile('.+Venda = .+')
-    for ticket in ticket_list:
-            url = 'http://www.grafbolsa.net/cgi-bin/al.pl/' + ticket.lower()
+    for ticker in ticker_list:
+            url = 'http://www.grafbolsa.net/cgi-bin/al.pl/' + ticker.lower()
             r = requests.get(url,headers=headers)
             soup = BeautifulSoup(r.text)
             prices.append(float(soup.find(text=regex)\

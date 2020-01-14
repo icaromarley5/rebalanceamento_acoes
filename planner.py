@@ -7,7 +7,7 @@ Created on Sun Jan 12 21:10:48 2020
 import matplotlib.pyplot as plt
 #import seaborn as sns
 import pandas as pd
-from crawlers import get_cei_data, get_tickets_price
+from crawlers import get_cei_data, get_tickers_price
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -15,8 +15,7 @@ def generate_plan(cpf, password, capital):
     print('AVISO: carregando dados da internet, aguarde...')
     
     df = pd.DataFrame(get_cei_data(cpf,password))
-    
-    df['Preço'] = get_tickets_price(df['Ticket'].values)
+    df['Preço'] = get_tickers_price(df['Ticker'].values)
     df['Valor'] = df['Preço'] * df['Quantidade']
     df['% atual'] = df['Valor'] * 100 / df['Valor'].sum()
     df['% alvo'] = 100 / df.shape[0]
@@ -42,7 +41,7 @@ def generate_plan(cpf, password, capital):
             if non_allocated_capital < target_value - row['Valor']:
                 # balanceamento não é possível
                 # comprar o máximo que for possível
-                wait_for = row['Ticket'] 
+                wait_for = row['Ticker'] 
                 quant = non_allocated_capital // row['Preço']
                 
         non_allocated_capital -= row['Preço'] * quant
@@ -82,7 +81,7 @@ def generate_plan(cpf, password, capital):
                     else:
                         # não há capital suficiente
                         quant -= 1
-                        wait_for = row['Ticket']
+                        wait_for = row['Ticker']
                         break
                 else:
                     # distância não pode ser diminuídal
@@ -97,10 +96,10 @@ def generate_plan(cpf, password, capital):
                 break
     
     print('Planejamento concluído com sucesso:')
-    print('\nRECOMENDAÇÃO: ações p/ comprar por Ticket:\n')
+    print('\nRECOMENDAÇÃO: ações p/ comprar:\n')
     for _,row in df[df['Quantidade para comprar'] > 0].iterrows():
         print('\t{}: {:.0f} X R$ {:.2f}'.format(
-                row['Ticket'], row['Quantidade para comprar'], 
+                row['Ticker'], row['Quantidade para comprar'], 
                 row['Preço'])) 
     
     if wait_for:
@@ -113,7 +112,7 @@ def generate_plan(cpf, password, capital):
     df['distance_planned'] = df['% alvo'] - df['% planejada']
     distance_total_balanced = df['distance_planned'].abs().sum()
     
-    ax = df.set_index('Ticket').sort_index()[['% atual', '% planejada']]\
+    ax = df.set_index('Ticker').sort_index()[['% atual', '% planejada']]\
         .plot(kind='bar', figsize=(9, 5), stacked=False)
     plt.title('Carteira balanceada')
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.95))
