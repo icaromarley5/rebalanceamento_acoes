@@ -12,6 +12,5 @@ capital = 0 # valor do aporte
 
 cpf = '' # cpf
 password = '' # senha cei
-cod = ''# código corretora
 
-planner.generate_plan(cpf,password,cod,capital)
+planner.generate_plan(cpf,password,capital)

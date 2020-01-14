@@ -12,17 +12,14 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
+import requests
+from bs4 import BeautifulSoup
 import re
 
 def get_browser():
-    #chrome_options = Options()
-    #chrome_options.add_argument("--headless")
-    #chrome_options.add_argument("--window-size=1366x1280")
-    
-    #return webdriver.Chrome(chrome_options=chrome_options)
     return webdriver.PhantomJS()
     
-def get_cei_data(cpf,password,cod):
+def get_cei_data(cpf,password):
     data = {
         'Ticket':[],
         'Quantidade':[],
@@ -34,38 +31,30 @@ def get_cei_data(cpf,password,cod):
         url = 'https://cei.b3.com.br/CEI_Responsivo/negociacao-de-ativos.aspx'
         browser.get(url)
         
-        inputElement = browser.find_element_by_id("ctl00_ContentPlaceHolder1_txtLogin")
+        inputElement = browser.find_element_by_id(
+                "ctl00_ContentPlaceHolder1_txtLogin")
         inputElement.send_keys(cpf)
-        inputElement = browser.find_element_by_id("ctl00_ContentPlaceHolder1_txtSenha")
+        inputElement = browser.find_element_by_id(
+                "ctl00_ContentPlaceHolder1_txtSenha")
         inputElement.send_keys(password)
         inputElement.send_keys(Keys.RETURN)
         
-        WebDriverWait(browser,15).until(lambda driver:driver.current_url=='https://cei.b3.com.br/CEI_Responsivo/home.aspx')           
-        
+        #import pdb;pdb.set_trace()
+        WebDriverWait(browser, 15).until(lambda driver:
+            driver.current_url==
+                'https://cei.b3.com.br/CEI_Responsivo/home.aspx')           
+        url = 'https://cei.b3.com.br/CEI_Responsivo/'\
+            'ConsultarMovimentoCustodia.aspx?TP_VISUALIZACAO=1'
         browser.get(url)
-        
-        selectElement = browser.find_element_by_id('ctl00_ContentPlaceHolder1_ddlAgentes')
-        
-        select = Select(selectElement)
-        
-        for o in select.options:
-            value = o.get_attribute('value')
-            if cod in value:
-                select.select_by_value(value)
-                selectElement.submit()
-                break
-        WebDriverWait(browser,15).until(lambda driver:driver.find_element_by_id('ctl00_ContentPlaceHolder1_ddlContas').get_attribute('value') != '')           
-        
-        browser.find_element_by_id('ctl00_ContentPlaceHolder1_btnConsultar').click()
-        WebDriverWait(browser,15).until(EC.presence_of_element_located((By.ID, "ctl00_ContentPlaceHolder1_rptAgenteBolsa_ctl00_rptContaBolsa_ctl00_pnResumoNegocios")))           
-        
-        table_info = browser.find_element_by_id('ctl00_ContentPlaceHolder1_rptAgenteBolsa_ctl00_rptContaBolsa_ctl00_pnResumoNegocios').find_element_by_tag_name('tbody')
-        
-        for tr in table_info.find_elements_by_tag_name('tr'):
+ 
+        tbody = browser.find_element_by_tag_name('table')\
+            .find_element_by_tag_name('tbody')
+            
+        for tr in tbody.find_elements_by_tag_name('tr'):
             td_list = tr.find_elements_by_tag_name('td')
-            data['Ticket'].append(td_list[0].text)
-            data['Quantidade'].append(int(td_list[6].text))
-
+            data['Ticket'].append(td_list[2].text.strip())
+            data['Quantidade'].append(int(td_list[5].text.strip()))
+                
     except Exception as e:
         print(e)
     finally:
@@ -73,25 +62,18 @@ def get_cei_data(cpf,password,cod):
     
     return data
 
-def get_tickets_price(ticket_list):
-    
-    browser = get_browser()
-    
+def get_tickets_price(ticket_list):    
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1)'\
+            ' AppleWebKit/537.36 (KHTML, like Gecko)'\
+                ' Chrome/39.0.2171.95 Safari/537.36'
+    }
     prices = []
-    
-    try:
-        for ticket in ticket_list:
-            
-            ticket = ticket[:-1] if ticket[-1] == 'F' else ticket
-            ticket = ticket.lower()
-            
-            url = 'http://www.grafbolsa.net/cgi-bin/al.pl/' + ticket
-            browser.get(url)
-            text = browser.find_element_by_xpath('//font[contains(text(), "Venda = ")]').text
-            prices.append(float(text.split('Venda = ')[1].strip()))
-    except Exception as e:
-        print(e)
-    finally:
-        browser.quit()
-        
+    regex = re.compile('.+Venda = .+')
+    for ticket in ticket_list:
+            url = 'http://www.grafbolsa.net/cgi-bin/al.pl/' + ticket.lower()
+            r = requests.get(url,headers=headers)
+            soup = BeautifulSoup(r.text)
+            prices.append(float(soup.find(text=regex)\
+                                    .split('Venda = ')[1].strip()))     
     return prices
