@@ -1,0 +1,23 @@
+{% extends 'rebalanceamento/base.html' %}
+
+{% block content %}
+
+<div class="d-flex justify-content-sm-around">
+	<div class="w-50">
+		<p class="text-justify">Esse aplicativo resgata a carteira de ações do CEI e planeja quais ativos comprar no próximo aporte. Para continuar, informe seu CPF e senha do CEI nos campos ao lado.<br><br>
+		Observação: são consideras apenas as ações da bolsa brasileira B3 e o planejamento usa a metodologia Buy and Hold.
+		<br><br></p>
+	</div>
+	<div class="d-flex justify-content-center">
+		<form action="{% url 'home' %}" method="post">
+			{% csrf_token %}
+			<div class="form-group col-11 m-0">
+			{{form.as_p}}
+			<input class="btn btn-primary login_btn" type="submit" value="Confirmar">
+			</div>
+			
+		</form>
+	</div>
+
+</div>
+{% endblock %}

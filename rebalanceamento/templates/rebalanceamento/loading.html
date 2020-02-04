@@ -1,0 +1,30 @@
+{% extends 'rebalanceamento/base.html' %}
+{% block content %}
+<div class="d-flex align-items-center flex-column">
+Carregando dados do CEI, por favor aguarde...
+<div class="spinner-border text-primary" role="status"></div><br>
+</div>
+{% endblock %}
+
+{% block extraScripts %}
+<script>
+const Http = new XMLHttpRequest();
+const url='{% url 'checkResults'  cpf=cpf %}';
+Http.open("GET", url);
+Http.send();
+Http.onreadystatechange = (e) => {
+  var result = Http.responseText;
+  switch(result) {
+    case 'Fail':
+        var div = document.getElementsByClassName("status")
+        div.innerHTML = "<p>Ocorreu um erro ao captar dados do CEI, tente novamente</p>"
+        break;
+    case 'Success':
+        window.location.href = "{% url 'confirmWallet' cpf=cpf %}"; 
+        break;
+    default:
+        window.location.href = "{% url 'home' %}"; 
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends 'rebalanceamento/base.html' %}
+
+{% block content %}
+<div class="text-center">
+  Ações recomendadas:<br><br>
+  <div class="card border-dark">
+      <table class="table table-sm table-hover">
+        <thead>
+          <tr>
+            <th scope="col">Ticker</th>
+            <th scope="col">Quantidade</th>
+            <th scope="col">Preço</th>
+          </tr>
+        </thread>
+        <tbody>
+        {% for tickerData in tickerList %}
+            <tr>
+              <td>{{tickerData.0}}</td>
+              <td>{{tickerData.1}}</td>
+              <td>R$ {{tickerData.2}}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <br>
+  <div class="d-flex align-items-center flex-column">
+    {{ allocationDiv | safe }}
+    <br>
+    {{ walletDiv | safe }}
+    <br>
+    {{ factorDiv | safe }}
+  </div>
+{% endblock %}
+
+
+{% block extraScripts %}
+{{ walletScript | safe }}
+{{ factorScript | safe }} 
+{{ allocationScript | safe }}
+{% endblock %}

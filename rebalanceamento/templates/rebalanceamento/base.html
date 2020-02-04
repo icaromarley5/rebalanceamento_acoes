@@ -1,0 +1,38 @@
+{% load static %}
+<!doctype html>
+<html lang="pt-br">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>Rebalanceamento de carteira</title>
+        <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet" type="text/css">
+        <link href="{% static 'css/bootstrap-theme.min.css' %}" rel="stylesheet" type="text/css">
+        <link href="{% static 'css/bokeh-1.2.0.min.css' %}" rel="stylesheet" type="text/css">
+        <link href="{% static 'css/bokeh-widgets-1.2.0.min.css' %}" rel="stylesheet" type="text/css">
+        <link href="{% static 'css/bokeh-tables-1.2.0.min.css' %}" rel="stylesheet" type="text/css">
+   </head>
+    <body class="bg-primary">
+        	<div class="d-flex justify-content-center h-70 mt-4">
+	        	<div class="card bg-white mt-4 mb-4 border-dark rounded-4 shadow-lg" style="width: 50rem;">
+                    <div class="card-header text-center border-dark rounded-4">
+                        <h1 class="card-title">
+                            <h1>Rebalanceamento de carteira</h1>
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                            {% block content %}
+                            {% endblock %}
+                    </div>
+                </div>
+            </div>
+    <script src="{% static 'js/jquery-3.3.1.slim.min.js' %}"></script>
+    <script src="{% static 'js/popper.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/bokeh-1.4.0.min.js' %} "></script>
+    <script src="{% static 'js/bokeh-widgets-1.4.0.min.js' %}"></script>
+    <script src="{% static 'js/bokeh-tables-1.4.0.min.js' %}"></script>
+    <script src="{% static 'js/bokeh-api-1.4.0.min.js' %}"></script>
+    {% block extraScripts %}
+    {% endblock %}
+    </body>
+</html>
