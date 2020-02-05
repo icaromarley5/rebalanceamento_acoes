@@ -55,7 +55,8 @@ Para executar os testes, é necessário criar um arquivo na pasta "rebalanceamen
 
 * Confirmação de ativos
 
-![Tela de confirmação](imgs/confirm.JPG)
+![Tela de confirmação-1](imgs/confirm1.JPG)
+![Tela de confirmação-2](imgs/confirm2.JPG)
 
 * Tabela de recomendações
 
