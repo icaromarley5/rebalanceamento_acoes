@@ -2,7 +2,7 @@
 {% block content %}
 <div class="d-flex align-items-center flex-column">
 Por favor, confirme as porcentagens de cada ativo e o valor do aporte:<br><br>
-    <form action="{% url 'confirmWallet' cpf=cpf %}" method="post">
+    <form action="{% url 'confirmWallet' %}" method="post">
         {% csrf_token %}
         <div class="form-group col-6 m-0">
 			{{form.as_p}}

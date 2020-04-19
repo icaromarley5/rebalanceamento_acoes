@@ -3,17 +3,22 @@ from django.test import Client
 from django.urls import reverse
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 
+from django.core.files.uploadedfile import SimpleUploadedFile
+
 import pandas as pd 
-from selenium import webdriver
 import time
+
+import requests
+from bs4 import BeautifulSoup
 
 from rebalanceamento import views
 from rebalanceamento import planner
 from rebalanceamento import tickerData
 from rebalanceamento import forms
-from rebalanceamento import cleaner
-from rebalanceamento import loginInfo
 
+testFilePath = 'rebalanceamento/testInputs/'
+
+'''
 # Create your tests here.
 class PlannerTestCase(TestCase):
     def test_computePlanRebalance(self):
@@ -79,104 +84,108 @@ class PlannerTestCase(TestCase):
                * plan['Preço']).sum()
         self.assertEqual(totalCapital, capital)
 
-     
+def getTickerCode():
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1)'\
+        ' AppleWebKit/537.36 (KHTML, like Gecko)'\
+        ' Chrome/39.0.2171.95 Safari/537.36'}
+    r = requests.get('https://www.fundamentus.com.br/detalhes.php',headers=headers)
+    soup = BeautifulSoup(r.text)
+    return soup.find('td').text.strip()
+
+def checkProcessingEmpty(fileName):
+    return tickerData.processCSV(testFilePath + fileName).empty
+
 class TickerDataTestCase(TestCase):
-    def testLoadBrowser(self):
-        tickerData.threadCreateBrowser.join()
-        self.assertTrue(isinstance(tickerData.browser,
-                                   webdriver.Chrome))
+    def test_processCSVSuccess(self):
+        self.assertFalse(checkProcessingEmpty('valid.csv'))
+
+    def test_processCSVFailHeader(self):
+        self.assertTrue(checkProcessingEmpty('invalidHeader.csv'))
+
+    def test_processCSVFailQuantity(self):
+        self.assertTrue(checkProcessingEmpty('invalidQuantity.csv'))
+
+    def test_processCSVFailStructure(self):
+        self.assertTrue(checkProcessingEmpty('invalidStructure.csv'))
+
+    def test_processCSVFailTicker(self):
+        self.assertTrue(checkProcessingEmpty('invalidTicker.csv'))
+
+    def test_processCSVFailTicker2(self):
+        self.assertTrue(checkProcessingEmpty('invalidTicker2.csv'))
+    
+    def test_addTickerInfoSuccess(self):
+        # pull first ticker from fundamentus
         
-    def test_getTickersPriceSuccess(self):
-        tickerList = ['ABEV3', 'MDIA3',
-                       'MGLU3', 'ITUB4', 'NTCO3']
-        priceList = tickerData._getTickersPrice(tickerList)
-        self.assertFalse(any(map(
-            lambda x: x == 0, priceList)))
-        try:
-            priceList = map(float, priceList)
-        except:
-            pass
-        self.assertTrue(all(map(
-            lambda x: isinstance(x, float), priceList)))
+        data = {'Ticker':[getTickerCode()]}
+        dataImproved = tickerData.addTickerInfo(data)
 
-    def test_getTickersPriceFail(self):
+        self.assertTrue('Preço' in dataImproved.keys() and 'VPA' in dataImproved.keys())
+        self.assertTrue(type(dataImproved['Preço'][0]) == float)
+        self.assertTrue(type(dataImproved['VPA'][0]) == float)
+
+    def test_addTickerInfoFail(self):
         with self.assertRaisesMessage(Exception,
                                       'Data not found'):
-            tickerList = ['']
-            tickerData._getTickersPrice(tickerList)
-
-    def test_getCEIdataFail(self):
+            data = {'Ticker':[]}
+            tickerData.addTickerInfo(data)
         with self.assertRaisesMessage(Exception,
                                       'Data not found'):
-            tickerData._getCEIdata('a', 'a')
+            data = {'Ticker':['QWEWEW']}
+            tickerData.addTickerInfo(data)
+'''
 
-    def test_getCEIdataSuccess(self):
-        cpf = loginInfo.cpf
-        password = loginInfo.password
-        data = tickerData._getCEIdata(cpf, password)
+def getFileData(fileName):
+    with open(testFilePath + fileName,'rb') as f:
+        return SimpleUploadedFile(f.name,f.read())
 
-        self.assertTrue(all(map(
-            lambda x: isinstance(x, str),
-            data['Ticker'])))
-        self.assertTrue(all(map(
-            lambda x: x == x.upper(),
-            data['Ticker'])))
-        self.assertTrue(all(map(
-            lambda x: isinstance(x,int),
-            data['Quantidade'])))
-
+def submitFile(fileName):
+    fileData = getFileData(fileName)
+    return forms.WalletDataForm({},{'file':fileData}).is_valid()
+'''
 class FormTestCase(TestCase):
-    def test_CEIformclean(self):
-        data = {
-            'cpf': '1',
-            'password': '1',
-            'accept': False
-            }
-        form = forms.CEIForm(data=data)
-        self.assertEqual(False, form.is_valid())
-        
-    def test_createWalletForm(self):
-        data = {
-            'Ticker': ['A', 'B', 'C'],
-            'Quantidade':[0, 0, 0],
-            'Preço': [0, 0, 0],
-            }
-        WalletForm = forms.createWalletForm(data)
-        
-        n = len(data['Ticker'])
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.data = pd.DataFrame({
+            'Ticker': ['A', 'B'],
+            'Quantidade': [0, 0]})
+        cls.WalletForm = forms.createWalletPlanningForm(cls.data)
+
+    def test_WalletDataFormTypeSuccess(self):
+        self.assertTrue(submitFile('valid.csv'))
+
+    def test_WalletDataFormTypeFail(self):
+        self.assertFalse(submitFile('invalidType.txt'))
+
+    def test_WalletDataFormHeaderFail(self):
+        self.assertFalse(submitFile('invalidHeader.csv'))
+
+    def test_WalletDataFormQuantityFail(self):
+        self.assertFalse(submitFile('invalidQuantity.csv'))
+
+    def test_WalletDataFormStructureFail(self):
+        self.assertFalse(submitFile('invalidStructure.csv'))
+
+    def test_WalletDataFormTickerFail(self):
+        self.assertFalse(submitFile('invalidTicker.csv'))
+
+    def test_WalletDataFormTicker2Fail(self):
+        self.assertFalse(submitFile('invalidTicker2.csv'))
+
+    def test_createWalletPlanningForm(self):
+        n = self.data.shape[0]
         fieldList = ['capital']
-        fieldList += ['price'+str(i) for i in range(n)]
-        fieldList += ['ticker'+str(i) for i in range(n)]
-        fieldList += ['quantity'+str(i) for i in range(n)]
-        fieldList += ['percent'+str(i) for i in range(n)]
+        fieldList += ['ticker' + str(i) for i in range(n)]
+        fieldList += ['quantity' + str(i) for i in range(n)]
+        fieldList += ['percent' + str(i) for i in range(n)]
         
         self.assertTrue(
             set(fieldList)
-            == set(WalletForm.base_fields.keys()))
-   
-    def test_WalletFormClean(self):
-        data = {
-            'Ticker': ['A', 'B'],
-            'Quantidade': [0, 0],
-            'Preço': [0, 0],
-            }
-        WalletForm = forms.createWalletForm(data)
+            == set(self.WalletForm.base_fields.keys()))
         
-        data = {
-            'capital': 0,
-            'ticker0': 'a',
-            'ticker1': 'b',
-            'quantity0': 0,
-            'quantity1': 0,
-            'percent0': 50,
-            'percent1': 50,
-            'price0': 1,
-            'price1': 4,
-            }
-        
-        form = WalletForm(data)
-        self.assertFalse(form.is_valid())
-        
+    def test_createWalletPlanningFormCapitalCleanSuccess(self):
         data = {
             'capital': 1,
             'ticker0': 'a',
@@ -188,9 +197,24 @@ class FormTestCase(TestCase):
             'price0': 1,
             'price1': 4,
             }
-        form = WalletForm(data)
+        form = self.WalletForm(data)
         self.assertTrue(form.is_valid())
 
+    def test_createWalletPlanningFormCleanFailureCapital(self):
+        data = {
+            'capital': 0,
+            'ticker0': 'a',
+            'ticker1': 'b',
+            'quantity0': 0,
+            'quantity1': 0,
+            'percent0': 50,
+            'percent1': 50,
+            }
+        
+        form = self.WalletForm(data)
+        self.assertFalse(form.is_valid())
+
+    def test_createWalletPlanningFormCapitalCleanFailurePercent(self):
         data = {
             'capital':1,
             'ticker0':'a',
@@ -198,140 +222,144 @@ class FormTestCase(TestCase):
             'quantity0':0,
             'quantity1':0,
             'percent0':50,
-            'percent1':50,
-            'price0':0,
-            'price1':4,
+            'percent1':49,
             }
-        form = WalletForm(data)
+        form = self.WalletForm(data)
         self.assertFalse(form.is_valid())
 
-class ViewTestCase(TestCase):
-    def setUp(self):
-        self.client = Client()
-  
-    def test_viewHome(self):
-        cpf = '2'
-        password = cpf
-        response = self.client.post(
-            reverse('home'), {
-                'cpf': cpf, 
-                'password': password,
-                'accept': True})
-        self.assertTrue(
-            'rebalanceamento/loading.html' in 
-            [template.name 
-             for template in response.templates])
-    
-    def test_checkResultsFailSuccessQueue(self):
-        cpf = '3'
-        password = cpf
-        response = self.client.post(
-            reverse('home'), {
-                'cpf': cpf, 
-                'password': password,
-                'accept':True})
-        response = self.client.get(reverse(
-            'checkResults',
-            kwargs={'cpf':cpf}))
-        self.assertEqual(response.content, b'Fail')
-   
-        self.client.post(
-            reverse('home'), {
-                'cpf': loginInfo.cpf, 
-                'password': loginInfo.password,
-                'accept': True})
-        response = self.client.get(
-            reverse(
-                'checkResults',
-                kwargs={'cpf': loginInfo.cpf}))
-        self.assertEqual(response.content, b'Success')
-
-    def test_confirmWalletPlotPlan(self):
-        self.client.post(reverse('home'), {
-            'cpf': loginInfo.cpf, 
-            'password': loginInfo.password,
-            'accept':True})
-        response = self.client.get(
-            reverse('checkResults',
-                    kwargs={'cpf': loginInfo.cpf}))
-        self.assertEqual(response.content, b'Success')
-        
-        response = self.client.get(
-            reverse('confirmWallet', 
-                    kwargs={'cpf': loginInfo.cpf}))
-        self.assertTrue(
-            'form' in response.context.keys() 
-            and 'cpf' in response.context.keys())
-        
+    def test_createWalletPlanningFormPOSTSuccess(self):
         data = {
-            'capital': 100,
-        }
-        form = response.context['form']
-        total = 0
-        fields = form.hidden_fields() + form.visible_fields()
-        for field in fields:
-            if field.html_name == 'capital': continue
-            if 'percent' in field.html_name:
-                total += field.value()
-            data[field.html_name] = field.value()
-        data['percent0'] += 100 - total
+            'ticker0':'ABEV3',
+            'quantity0':0,
+            'percent0':100,
+            'capital':100,
+            'tokenForm':'',
+        } 
+        self.assertIsNotNone(forms.createWalletPlanningFormPOST(data))
 
-        response = self.client.post(
-            reverse('confirmWallet',
-                kwargs={'cpf': loginInfo.cpf}),data,
-                follow= True)
-        self.assertRedirects(response, 
-            reverse(
-                'plotPlan',
-                kwargs={'cpf': loginInfo.cpf}))
-        self.assertTrue(
-            'allocationScript' in response.context.keys())
+    def test_createWalletPlanningFormPOSTFailureSize(self):
+        data = {
+            'ticker0':'ABEV3',
+            'quantity0':0,
+            'percent0':100,
+            'tokenForm':'',
+        } 
+        self.assertIsNone(forms.createWalletPlanningFormPOST(data))
 
-class TemplateTestCase(StaticLiveServerTestCase):
+    def test_createWalletPlanningFormPOSTFailureSize2(self):
+        data = {
+            'ticker0':'ABEV3',
+            'ticker1':'ABEV3',
+            'quantity0':0,
+            'percent0':100,
+            'capital':100,
+            'tokenForm':'',
+        } 
+        self.assertIsNone(forms.createWalletPlanningFormPOST(data))
+
+    def test_createWalletPlanningFormPOSTFailureField(self):
+        data = {
+            'ticke2r0':'ABEV3',
+            'quantity0':0,
+            'percent0':100,
+            'capital':100,
+            'tokenForm':'',
+        } 
+        self.assertIsNone(forms.createWalletPlanningFormPOST(data))
+'''
+
+class ViewTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.browser = tickerData.createBrowser()
         cls.client = Client()
-        
-    def test_loadingJs(self):
-        self.browser.get(
-            self.live_server_url  + reverse('home'))        
-        inputElement = self.browser.find_element_by_name(
-                "cpf")
-        inputElement.send_keys(loginInfo.cpf)
-        inputElement = self.browser.find_element_by_name(
-                "password")
-        inputElement.send_keys(loginInfo.password)
-        self.browser.find_element_by_class_name('btn').click()
-        while 'Carregando dados do CEI' not in self.browser.page_source:
-            time.sleep(.5)
-        self.assertTrue('Carregando dados do CEI' in self.browser.page_source)
-
-        while 'Carregando dados do CEI' in self.browser.page_source:
-            time.sleep(.5)
-        self.assertTrue('confirm' in self.browser.current_url)
     
-    @classmethod
-    def tearDownClass(cls):
-        cls.browser.quit()
-        super().tearDownClass()
+    def test_viewHomeGET(self):
+        response = self.client.get(
+            reverse('home'))
+        self.assertTrue(
+            'rebalanceamento/home.html' in 
+            [template.name 
+             for template in response.templates])
 
-class CleanerTestCase(TestCase):
-    def setUp(self):
-        self.client = Client()
-  
-    def test_cleaner(self):
-        cpf = '5'
-        password = cpf
-        response = self.client.post(reverse('home'), 
-                {'cpf': cpf, 
-                 'password': password,
-                 'accept': True})
-        self.assertTrue('rebalanceamento/loading.html' in 
-            [template.name for template in response.templates])
-        self.assertTrue(tickerData.tickerOutputBuffer.get(
-            cpf,None))
-        time.sleep(60 * 5)
-        self.assertEqual(tickerData.tickerOutputBuffer.get(
-            cpf,None),None)
+    def test_viewHomePOSTSuccess(self):
+        response = self.client.post(
+            reverse('home'), {'file':getFileData('valid.csv')})
+        self.assertTrue(
+            'rebalanceamento/confirmWallet.html' in 
+            [template.name 
+             for template in response.templates])
+
+    def test_viewHomePOSTFailure(self):
+        response = self.client.post(
+            reverse('home'), {'file':getFileData('invalidType.txt')})
+        self.assertFalse(
+            'rebalanceamento/confirmWallet.html' in 
+            [template.name 
+             for template in response.templates])
+
+    def test_confirmWalletGET(self):
+        response = self.client.get(reverse('confirmWallet'))
+        self.assertFalse(
+            'rebalanceamento/confirmWallet.html' in 
+            [template.name 
+             for template in response.templates])
+
+    def test_confirmWalletPOSTSuccess(self):
+        data = {
+            'ticker0':'ABEV3',
+            'quantity0':0,
+            'percent0':100,
+            'capital':100,
+            'tokenForm':'',
+        } 
+        response = self.client.post(reverse('confirmWallet'), data)
+        
+        self.assertTrue(
+            'rebalanceamento/plotPlan.html' in 
+            [template.name 
+             for template in response.templates])
+
+    def test_confirmWalletPOSTWalletCreationFailure(self):
+        data = {
+            'ticker0':'ABEV3',
+            'percent0':100,
+            'capital':100,
+            'tokenForm':'',
+        } 
+        response = self.client.post(reverse('confirmWallet'), data)
+        
+        self.assertFalse(
+            'rebalanceamento/confirmWallet.html' in 
+            [template.name 
+             for template in response.templates])
+
+    def test_confirmWalletPOSTFormFailure(self):
+        data = {
+            'ticker0':'ABEV3',
+            'quantity0':0,
+            'percent0':100,
+            'capital':0,
+            'tokenForm':'',
+        } 
+        response = self.client.post(reverse('confirmWallet'), data)
+        
+        self.assertTrue(
+            'rebalanceamento/confirmWallet.html' in 
+            [template.name 
+             for template in response.templates])
+
+    def test_confirmWalletPOSTFormFailure(self):
+        data = {
+            'ticker0':'AAAA3',
+            'quantity0':0,
+            'percent0':100,
+            'capital':100,
+            'tokenForm':'',
+        } 
+        response = self.client.post(reverse('confirmWallet'), data)
+        
+        self.assertFalse(
+            'rebalanceamento/confirmWallet.html' in 
+            [template.name 
+             for template in response.templates])

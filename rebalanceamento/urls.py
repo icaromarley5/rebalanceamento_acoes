@@ -11,8 +11,6 @@ from . import views
 
 urlpatterns = [
     path('', views.home, name='home'),
-    path('wallet/checkResults/<str:cpf>/', views.checkResults, name='checkResults'),
-    path('wallet/plotPlan/<str:cpf>/', views.plotPlan, name='plotPlan'),
-    path('wallet/confirm/<str:cpf>/', views.confirmWallet, name='confirmWallet'),
+    path('wallet/confirm/', views.confirmWallet, name='confirmWallet'),
 ]
 

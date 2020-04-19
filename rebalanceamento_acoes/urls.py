@@ -16,5 +16,5 @@ Including another URLconf
 from django.urls import include, path
 
 urlpatterns = [
-    path('rebalanceamento/', include('rebalanceamento.urls')),
+    path('', include('rebalanceamento.urls')),
 ]

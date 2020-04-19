@@ -1,0 +1,22 @@
+{% extends 'rebalanceamento/base.html' %}
+
+{% block content %}
+
+<div class="d-flex justify-content-sm-around">
+	<div class="w-50">
+		<p class="text-justify">
+			Para continuar, carregue um arquivo CSV com seus ativos.
+			<br>Ele pode ser gerado no <a href="https://cei.b3.com.br/">CEI</a>, em "Carteira de ativos", copiando a tabela gerada (sem o cabeçalho e rodapé).
+		</p>
+	</div>
+	<div class="w-25">
+		<div class="d-flex justify-content-center">
+			<form action="{% url 'home' %}" method="post"enctype="multipart/form-data">
+				{% csrf_token %}
+				{{form.as_p}}
+				<input class="btn btn-primary login_btn" type="submit" value="Confirmar">
+			</form>
+		</div>
+	</div>
+</div>
+{% endblock %}
