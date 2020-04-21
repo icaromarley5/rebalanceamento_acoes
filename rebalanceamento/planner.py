@@ -12,12 +12,12 @@ def computePlan(planDf,capital):
     df = planDf.copy()
 
     waitFor = None
-    df['Quantidade para comprar'] = 0
+    df['QuantidadeParaComprar'] = 0
     nonAllocatedCapital = capital
     
     df['Valor'] = df['Preço'] * df['Quantidade']
-    df['% atual'] = df['Valor'] * 100 / df['Valor'].sum()
-    df['distance'] = df['% alvo'] - df['% atual']
+    df['PorcentagemAtual'] = df['Valor'] * 100 / df['Valor'].sum()
+    df['distance'] = df['PorcentagemAlvo'] - df['PorcentagemAtual']
     
     df.sort_values(['distance','Preço'], 
                    ascending=False, 
@@ -27,7 +27,7 @@ def computePlan(planDf,capital):
         targetValue = \
             round((
                 df['Valor'].sum() + capital) 
-                * row['% alvo'] / 100,
+                * row['PorcentagemAlvo'] / 100,
                     2)
 
         if row['Valor'] < targetValue:   
@@ -40,30 +40,30 @@ def computePlan(planDf,capital):
                 waitFor = row['Ticker'] 
                 quant = nonAllocatedCapital // row['Preço']        
             nonAllocatedCapital -= row['Preço'] * quant
-            df.loc[row.name,'Quantidade para comprar'] += quant
+            df.loc[row.name,'QuantidadeParaComprar'] += quant
         if waitFor:          
             break
     if not waitFor:
         # rebalancing done without problems
         # invest the remaining capital
-        df['Valor planejado'] = (df['Quantidade'] + df['Quantidade para comprar'])\
+        df['ValorPlanejado'] = (df['Quantidade'] + df['QuantidadeParaComprar'])\
             * df['Preço']\
-            + df['% alvo'] * nonAllocatedCapital
-        df['% planejada'] = df['Valor planejado'] * 100 \
-            / df['Valor planejado'].sum()
-        df['distancePlanned'] = df['% alvo'] - df['% planejada']
+            + df['PorcentagemAlvo'] * nonAllocatedCapital
+        df['PorcentagemPlanejada'] = df['ValorPlanejado'] * 100 \
+            / df['ValorPlanejado'].sum()
+        df['distancePlanned'] = df['PorcentagemAlvo'] - df['PorcentagemPlanejada']
         df.sort_values(['distancePlanned', 'Preço'],
                        ascending=False, inplace=True)
         
         for _,row in df.iterrows():
-            distanceNow = abs(row['% alvo'] - row['% planejada'])
+            distanceNow = abs(row['PorcentagemAlvo'] - row['PorcentagemPlanejada'])
             
             quant = 0
             while True:
                 quant += 1
-                percent = (row['Valor planejado'] + quant * row['Preço']) * 100\
-                    /df['Valor planejado'].sum()
-                distanceBuyMore = abs(row['% alvo'] - percent)
+                percent = (row['ValorPlanejado'] + quant * row['Preço']) * 100\
+                    /df['ValorPlanejado'].sum()
+                distanceBuyMore = abs(row['PorcentagemAlvo'] - percent)
                 if distanceBuyMore <= distanceNow:
                     if row['Preço'] * quant <= nonAllocatedCapital:
                          continue
@@ -80,15 +80,16 @@ def computePlan(planDf,capital):
                 # buy at least one
                 quant = 1
             nonAllocatedCapital -= row['Preço'] * quant
-            df.loc[row.name,'Quantidade para comprar'] += quant
+            df.loc[row.name,'QuantidadeParaComprar'] += quant
             if waitFor:
                 break
     
-    df['Valor planejado'] = (
-        df['Quantidade'] + df['Quantidade para comprar']) \
+    df['ValorPlanejado'] = (
+        df['Quantidade'] + df['QuantidadeParaComprar']) \
         * df['Preço']
-    df['% planejada'] = df['Valor planejado'] * 100 \
-        / df['Valor planejado'].sum()
-    df['distancePlanned'] = df['% alvo'] \
-        - df['% planejada']
+    df['PorcentagemPlanejada'] = df['ValorPlanejado'] * 100 \
+        / df['ValorPlanejado'].sum()
+    df['distancePlanned'] = df['PorcentagemAlvo'] \
+        - df['PorcentagemPlanejada']
+
     return df, nonAllocatedCapital

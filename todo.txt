@@ -1,20 +1,2 @@
-testar outras libraries 
-
-
-
-dividir dataplots em plots funcoes separadas. THREADS?
-
-otimizar codigo
-
-orientar a objeto
-
-reduzir repetição de cod
-
-melhorar plots (usar outra lib)
-https://mode.com/blog/python-interactive-plot-libraries
-https://plotly.com/python/
-favicon
-
 atualizar readme  
-
 Sugerir trademap modificações, apresentar repositório

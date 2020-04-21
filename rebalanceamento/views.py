@@ -33,7 +33,10 @@ def home(request):
 
 def confirmWallet(request):    
     if request.method == 'POST':
-        formClass = createWalletPlanningFormPOST(request.POST)
+        postData = {}
+        for key, items in request.POST.items():
+            postData[key] = items[0] if type(items) is list else items
+        formClass = createWalletPlanningFormPOST(postData)
         if formClass:
             form = formClass(request.POST)
             if form.is_valid():
@@ -41,7 +44,7 @@ def confirmWallet(request):
                 df = pd.DataFrame([])
                 df['Ticker'] = [form.cleaned_data['ticker' + str(i)] for i in range(nRows)]
                 df['Quantidade'] = [form.cleaned_data['quantity' + str(i)] for i in range(nRows)]
-                df['% alvo']  = [form.cleaned_data['percent' + str(i)] for i in range(nRows)]               
+                df['PorcentagemAlvo']  = [form.cleaned_data['percent' + str(i)] for i in range(nRows)]               
                 
                 try:
                     df = tickerData.addTickerInfo(df) 
@@ -51,10 +54,9 @@ def confirmWallet(request):
                 capital = form.cleaned_data['capital']
                 plan, nonAllocatedCapital = planner.computePlan(
                     pd.DataFrame(df), capital)
-
                 dataToPlot = {
                         'plan': plan,
-                        'capital': capital,
+                        'allocatedCapital': capital - nonAllocatedCapital,
                         'nonAllocatedCapital': nonAllocatedCapital,
                     }
 
@@ -68,3 +70,17 @@ def confirmWallet(request):
                 'rebalanceamento/confirmWallet.html',
                 {'form': form})
     return redirect('home') 
+
+'''
+def confirmWallet(request):    
+    dataToPlot = {
+            'plan': pd.read_csv('planTest.csv'),
+            'capital': 123.0,
+            'nonAllocatedCapital': 26.42,
+        }
+    plots = dataPlots.createPlots(dataToPlot)
+    return render(
+        request, 
+        'rebalanceamento/plotPlan.html',
+        plots) 
+'''

@@ -26,20 +26,16 @@
   </div>
   <br>
   <div class="d-flex align-items-center flex-column">
-    {{ allocationDiv | safe }}
+    {{ allocationFig | safe }}
     <br>
-    {{ walletDiv | safe }}
+    {{ walletFig | safe }}
     <br>
-    {{ factorDiv | safe }}
+    {{ factorFig | safe }}
     <br>
-    {{ VPADiv | safe }}
+    {{ VPAFig | safe }}
   </div>
 {% endblock %}
 
 
 {% block extraScripts %}
-{{ walletScript | safe }}
-{{ factorScript | safe }} 
-{{ allocationScript | safe }}
-{{ VPAScript | safe }}
 {% endblock %}
