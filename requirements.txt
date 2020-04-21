@@ -1,6 +1,5 @@
 asgiref==3.2.3
 beautifulsoup4==4.8.2
-bokeh==1.4.0
 bs4==0.0.1
 Django==3.0.3
 MarkupSafe==1.1.1
@@ -15,3 +14,4 @@ soupsieve==1.9.5
 sqlparse==0.3.0
 tabulate==0.8.6
 urllib3==1.25.8
+plotly==4.6.0
