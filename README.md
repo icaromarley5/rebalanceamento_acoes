@@ -1,59 +1,55 @@
 # rebalanceamento_acoes
-Servidor Django para uma aplicação que planeja o rebalanceamento e o investimento de um novo aporte em uma carteira de ações da bolsa brasileira (B3). A estratégia de rebalanceamento é a de "comprar o ativo mais atrasado" e a de investimento é a Buy and Hold.
+Servidor Django para uma aplicação que planeja o rebalanceamento e o investimento de um novo aporte em uma carteira de ações da bolsa brasileira (B3). 
+O que ela faz:
+1. Planeja o aporte, utilizando a estratégia de "comprar o ativo mais atrasado"
+2. Mostra a quantidade do aporte que foi possível alocar (considerando os preços dos ativos)
+3. Faz uma comparação do desbalanceamento da carteira antes e depois do aporte
+4. Mostra o patrimônio do acionista antes e depois do aporte, através do múltiplo VPA (valor patrimonial por ação)
 
-Essa aplicação se mostra bastante útil para adpetos da filosofia Buy and Hold pois:
+Essa aplicação é bastante útil para adpetos da filosofia Buy and Hold pois:
 1. automatiza o planejamento dos aportes (sejam eles anuais, mensais ou semanais)
-2. esconde os preços dos ativos
-3. mostra de forma detalhada o desbalanceamento da carteira
+2. analisa o desbalanceamento da carteira
+3. mostra o patrimônio do acionista, calculado com um medidor mais estável que a precificação do mercado
+4. esconde os preços dos ativos no planejamento e no cálculo de patrimônio
 
 ## Descrição detalhada
-A aplicação faz um Web Crawling com o navegador Chrome (em modo headless) para coletar a carteira do usuário pelo CEI (Canal Eletrônico do Investidor). 
-Para limitar o uso de memória RAM, um único navegador é aberto e uma fila foi implementada para atender possíveis requisições em paralelo.
+A aplicação recebe um arquivo de tipo CSV, gerado a partir do site do CEI (Canal Eletrônico do Investidor). 
+Este arquivo é usado apenas para coletar quais ativos estão na carteira.
 
-O processamento dura em torno de 30 segundos e uma tela de carregamento foi adicionada para conscientizar o usuário.
+Após a inserção do aqruivo, o usuário é redirecionado para uma tela onde é possível estabelecer as porcentagens alvo de cada ativo e o valor do aporte.
 
-Assim que a coleta da carteira é confirmada, o usuário é redirecionado para uma tela onde é possível estabelecer as porcentagens alvo de cada ativo e o valor do aporte.
+A tela final é exibida após a inserção desses dados. Nela, podem ser analisados:
 
-A tela final é exibida após a inserção desses dados. O planejamento é feito e uma tabela com os ativos para comprar é gerada, junto com os seguintes gráficos:
-* Fator de desbalanceamento: compara um índice de desbalanceamento (soma das diferenças da % atual do ativo e a % alvo) antes e depois do planejamento
-* Balanceamento de ativos: mostra o balanceamento antes e depois do planejamento
-* Alocação de capital: mostra qual percentual do aporte foi possível alocar
+* Uma tabela que mostra como alocar o aporte
+* Fator de desequilíbrio, que compara um índice de desbalanceamento (soma das diferenças da % atual do ativo e a % alvo) antes e depois do planejamento
+* Patrimônio acionário, que destaca a variação patrimônial antes e depois do aporte
+* Composição da carteira, onde é possível comparar o balanceamento antes e depois do planejamento
+* Alocação de capital, que mostra qual percentual do aporte foi possível alocar
 
-#### Rebalanceamento
+#### Como o rebalanceamento é calculado
 O rebalanceamento prioriza:
 1. o maior atraso em relação à porcentagem automaticamente definida (100/número de ações), aplicada sobre o total da carteira (desconsiderando aporte) 
 2. maior cotação
 
 Para cada ativo, o script tenta atingir essa porcentagem (caso esteja atrasado) ou pelo menos comprar 1 ativo.
 
-#### Investimento
+#### Como o investimento é calculado
 O investimento é feito com o restante do aporte, após um rebalanceamento que concluído com sucesso (compra de todos os ativos atrasados).
 Nele, apenas a maior cotação é utilizada como meio de ordenação e a porcentagem é aplicada apenas no restante do aporte.
 Similar ao rebalanceamento, o objetivo é comprar pelo menos 1 ação de cada ativo.
 
-
-## Requerimentos:
-* Navegador Chrome 
-* (Linux) substituir o chromedriver do windows por uma versão compatível com linux na pasta "rebalanceamento"
-
-## Bibliotecas utilizadas: 
-* Bokeh (visualização de gráficos sobre a carteira)
+## Principais Bibliotecas utilizadas: 
+* Django (servidor web)
+* Plotly (visualização de gráficos sobre a carteira)
 * Pandas e Numpy (manipulação de dados) 
-* Selenium (Web Crawling para adquirir informações do CEI e dos preços dos ativos)
+* Requests (Web Scraping para adquirir informações dos ativos)
 
-## Testes
-Para executar os testes, é necessário criar um arquivo na pasta "rebalanceamento" chamado "login_info.py" com duas variáveis: "cpf" e "password", que devem conter uma senha e um cpf válidos para teste do Web Crawling do CEI.
+## Telas da aplicação
+* Tela inicial
 
-## Telas do Front-end
-* Formulário de login CEI
+![Tela inicial](imgs/home.JPG)
 
-![Formulário CEI](imgs/login.JPG)
-
-* Carregamento 
-
-![Tela de carregamento](imgs/loading.JPG)
-
-* Confirmação de ativos
+* Confirmação de carteira
 
 ![Tela de confirmação-1](imgs/confirm1.JPG)
 ![Tela de confirmação-2](imgs/confirm2.JPG)
@@ -62,14 +58,18 @@ Para executar os testes, é necessário criar um arquivo na pasta "rebalanceamen
 
 ![Recomendações](imgs/recomendacao.JPG)
 
-* Gráfico de balanceamento de ativos
+* Gráfico de composição da carteira
 
-![Balanceamento de ativos da carteira](imgs/carteira.JPG)
+![Composição da carteira](imgs/carteira.JPG)
 
-* Gráfico de fator de desbalanceamento
+* Gráfico de fator de desequilíbrio
 
-![Fator de desbalanceamento](imgs/fator.JPG)
+![Fator de desequilíbrio](imgs/fator.JPG)
 
 * Gráfico de alocação do capital
 
 ![Alocação do aporte](imgs/alocacao.JPG)
+
+* Gráfico de variação patrimonial
+
+![Variação patrimonial](imgs/patrimonio.JPG)
