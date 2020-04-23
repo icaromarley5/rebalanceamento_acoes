@@ -1,30 +1,34 @@
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase 
 from django.test import Client
 from django.urls import reverse
-from django.contrib.staticfiles.testing import StaticLiveServerTestCase
-
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.utils import timezone
+from django.core.exceptions import ValidationError
 
 import pandas as pd 
-import time
-
-import requests
-from bs4 import BeautifulSoup
 
 from rebalanceamento import views
 from rebalanceamento import planner
 from rebalanceamento import tickerData
 from rebalanceamento import forms
+from rebalanceamento.models import Stock
 
 testFilePath = 'rebalanceamento/testInputs/'
 
-'''
+def getFileData(fileName):
+    with open(testFilePath + fileName,'rb') as f:
+        return SimpleUploadedFile(f.name,f.read())
+
+def submitFile(fileName):
+    fileData = getFileData(fileName)
+    return forms.WalletDataForm({},{'file':fileData}).is_valid()
+
 # Create your tests here.
 class PlannerTestCase(TestCase):
     def test_computePlanRebalance(self):
         data = {
             'Ticker': ['A', 'A2'],
-            '% alvo': [25, 75],
+            'PorcentagemAlvo': [25, 75],
             'Preço': [1, 1],
             'Quantidade': [25, 25],
             }
@@ -37,7 +41,7 @@ class PlannerTestCase(TestCase):
         plan.set_index('Ticker', inplace=True)
         self.assertEqual(50, plan.loc[
             'A2',
-            'Quantidade para comprar'])
+            'QuantidadeParaComprar'])
         self.assertEqual(50, plan['distance'].abs().sum())
         self.assertEqual(0, 
             plan['distancePlanned'].abs().sum())
@@ -46,7 +50,7 @@ class PlannerTestCase(TestCase):
     def test_computePlanNoAllocation(self):
         data = {
             'Ticker': ['A', 'A2', 'A3'],
-            '% alvo': [33, 33, 33],
+            'PorcentagemAlvo': [33, 33, 33],
             'Preço': [1, 1, 50],
             'Quantidade': [15, 15, 0],
             }
@@ -65,7 +69,7 @@ class PlannerTestCase(TestCase):
     def test_computePlanInvest(self):
         data = {
             'Ticker': ['A', 'A2', 'A3'],
-            '% alvo': [33, 33, 33],
+            'PorcentagemAlvo': [33, 33, 33],
             'Preço': [15, 23, 50],
             'Quantidade': [15, 15, 0],
             }
@@ -80,79 +84,27 @@ class PlannerTestCase(TestCase):
             plan['distancePlanned'].abs().sum()
             <= plan['distance'].abs().sum())
         totalCapital = nonAllocatedCapital \
-            + (plan['Quantidade para comprar'] \
+            + (plan['QuantidadeParaComprar'] \
                * plan['Preço']).sum()
         self.assertEqual(totalCapital, capital)
 
-def getTickerCode():
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1)'\
-        ' AppleWebKit/537.36 (KHTML, like Gecko)'\
-        ' Chrome/39.0.2171.95 Safari/537.36'}
-    r = requests.get('https://www.fundamentus.com.br/detalhes.php',headers=headers)
-    soup = BeautifulSoup(r.text)
-    return soup.find('td').text.strip()
-
-def checkProcessingEmpty(fileName):
-    return tickerData.processCSV(testFilePath + fileName).empty
-
-class TickerDataTestCase(TestCase):
-    def test_processCSVSuccess(self):
-        self.assertFalse(checkProcessingEmpty('valid.csv'))
-
-    def test_processCSVFailHeader(self):
-        self.assertTrue(checkProcessingEmpty('invalidHeader.csv'))
-
-    def test_processCSVFailQuantity(self):
-        self.assertTrue(checkProcessingEmpty('invalidQuantity.csv'))
-
-    def test_processCSVFailStructure(self):
-        self.assertTrue(checkProcessingEmpty('invalidStructure.csv'))
-
-    def test_processCSVFailTicker(self):
-        self.assertTrue(checkProcessingEmpty('invalidTicker.csv'))
-
-    def test_processCSVFailTicker2(self):
-        self.assertTrue(checkProcessingEmpty('invalidTicker2.csv'))
-    
-    def test_addTickerInfoSuccess(self):
+class TickerDataTestCase(TestCase):    
+    def test_findTickerInfoSuccess(self):
         # pull first ticker from fundamentus
         
-        data = {'Ticker':[getTickerCode()]}
-        dataImproved = tickerData.addTickerInfo(data)
+        ticker = tickerData.getAValidTickerCode()
+        tickerInfo = tickerData.findTickerInfo(ticker)
 
-        self.assertTrue('Preço' in dataImproved.keys() and 'VPA' in dataImproved.keys())
-        self.assertTrue(type(dataImproved['Preço'][0]) == float)
-        self.assertTrue(type(dataImproved['VPA'][0]) == float)
+        self.assertTrue(set(['Ticker','VPA','Preço','Nome']) == set(tickerInfo.keys()))
+        self.assertTrue(type(tickerInfo['Preço']) == float)
+        self.assertTrue(type(tickerInfo['VPA']) == float)
+        self.assertTrue(tickerInfo['Nome'])
 
-    def test_addTickerInfoFail(self):
-        with self.assertRaisesMessage(Exception,
-                                      'Data not found'):
-            data = {'Ticker':[]}
-            tickerData.addTickerInfo(data)
-        with self.assertRaisesMessage(Exception,
-                                      'Data not found'):
-            data = {'Ticker':['QWEWEW']}
-            tickerData.addTickerInfo(data)
-'''
+    def test_findTickerInfoFail(self):
+        self.assertIsNone(tickerData.findTickerInfo(''))
+        self.assertIsNone(tickerData.findTickerInfo('QWEWEW'))
 
-def getFileData(fileName):
-    with open(testFilePath + fileName,'rb') as f:
-        return SimpleUploadedFile(f.name,f.read())
-
-def submitFile(fileName):
-    fileData = getFileData(fileName)
-    return forms.WalletDataForm({},{'file':fileData}).is_valid()
-'''
 class FormTestCase(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.data = pd.DataFrame({
-            'Ticker': ['A', 'B'],
-            'Quantidade': [0, 0]})
-        cls.WalletForm = forms.createWalletPlanningForm(cls.data)
-
     def test_WalletDataFormTypeSuccess(self):
         self.assertTrue(submitFile('valid.csv'))
 
@@ -175,98 +127,144 @@ class FormTestCase(TestCase):
         self.assertFalse(submitFile('invalidTicker2.csv'))
 
     def test_createWalletPlanningForm(self):
-        n = self.data.shape[0]
-        fieldList = ['capital']
-        fieldList += ['ticker' + str(i) for i in range(n)]
-        fieldList += ['quantity' + str(i) for i in range(n)]
-        fieldList += ['percent' + str(i) for i in range(n)]
+        walletForm = forms.createWalletPlanningForm(
+            pd.DataFrame({'Ticker':['A','B'],'Quantidade':[0,0]})
+        )
+
+        fieldList = [
+            'ticker',
+            'quantity','percent']
+        formFieldList = []
+        for form in walletForm.forms:
+            formFieldList+= list(form.base_fields.keys())
         
         self.assertTrue(
-            set(fieldList)
-            == set(self.WalletForm.base_fields.keys()))
-        
-    def test_createWalletPlanningFormCapitalCleanSuccess(self):
+            set(fieldList) == set(formFieldList))
+    
+    def test_createWalletPlanningFormSuccess(self):
+        walletForm = forms.createWalletPlanningForm()
         data = {
-            'capital': 1,
-            'ticker0': 'a',
-            'ticker1': 'b',
-            'quantity0': 0,
-            'quantity1': 0,
-            'percent0': 50,
-            'percent1': 50,
-            'price0': 1,
-            'price1': 4,
-            }
-        form = self.WalletForm(data)
+            'capital':100,
+            'form-TOTAL_FORMS': '2',
+            'form-INITIAL_FORMS': '2',
+            'form-MIN_NUM_FORMS': '0',
+            'form-MAX_NUM_FORMS': '1000',
+            'form-0-ticker': 'ABEV3',
+            'form-0-quantity': '2', 
+            'form-0-percent': '50',
+            'form-1-ticker': 'ITUB3',
+            'form-1-quantity': '2', 
+            'form-1-percent': '50',
+        } 
+        form = walletForm(data)
         self.assertTrue(form.is_valid())
 
     def test_createWalletPlanningFormCleanFailureCapital(self):
+        walletForm = forms.createWalletPlanningForm()
         data = {
-            'capital': 0,
-            'ticker0': 'a',
-            'ticker1': 'b',
-            'quantity0': 0,
-            'quantity1': 0,
-            'percent0': 50,
-            'percent1': 50,
-            }
-        
-        form = self.WalletForm(data)
+            'capital':0,
+            'form-TOTAL_FORMS': '2',
+            'form-INITIAL_FORMS': '2',
+            'form-MIN_NUM_FORMS': '0',
+            'form-MAX_NUM_FORMS': '1000',
+            'form-0-ticker': 'ABEV3',
+            'form-0-quantity': '2', 
+            'form-0-percent': '50',
+            'form-1-ticker': 'ITUB3',
+            'form-1-quantity': '2', 
+            'form-1-percent': '50',
+        } 
+        form = forms.CapitalForm(data)
         self.assertFalse(form.is_valid())
 
-    def test_createWalletPlanningFormCapitalCleanFailurePercent(self):
+    def test_createWalletPlanningFormFailurePercentTotal(self):
+        walletForm = forms.createWalletPlanningForm()
         data = {
-            'capital':1,
-            'ticker0':'a',
-            'ticker1':'b',
-            'quantity0':0,
-            'quantity1':0,
-            'percent0':50,
-            'percent1':49,
-            }
-        form = self.WalletForm(data)
+            'capital':100,
+            'form-TOTAL_FORMS': '2',
+            'form-INITIAL_FORMS': '2',
+            'form-MIN_NUM_FORMS': '0',
+            'form-MAX_NUM_FORMS': '1000',
+            'form-0-ticker': 'ABEV3',
+            'form-0-quantity': '2', 
+            'form-0-percent': '50',
+            'form-1-ticker': 'ITUB3',
+            'form-1-quantity': '2', 
+            'form-1-percent': '51',
+        } 
+        form = walletForm(data)
         self.assertFalse(form.is_valid())
 
-    def test_createWalletPlanningFormPOSTSuccess(self):
+    def test_createWalletPlanningFormFailureManagement(self):
+        walletForm = forms.createWalletPlanningForm()
         data = {
-            'ticker0':'ABEV3',
-            'quantity0':0,
-            'percent0':100,
             'capital':100,
-            'tokenForm':'',
+            'form-INITIAL_FORMS': '2',
+            'form-MIN_NUM_FORMS': '0',
+            'form-MAX_NUM_FORMS': '1000',
+            'form-0-ticker': 'ABEV3',
+            'form-0-quantity': '2', 
+            'form-0-percent': '50',
+            'form-1-ticker': 'ITUB3',
+            'form-1-quantity': '2', 
+            'form-1-percent': '50',
         } 
-        self.assertIsNotNone(forms.createWalletPlanningFormPOST(data))
+        form = walletForm(data)
+        self.assertRaises(ValidationError,form.is_valid)
 
-    def test_createWalletPlanningFormPOSTFailureSize(self):
+    def test_createWalletPlanningFormPOSTFailureQuantity(self):
+        walletForm = forms.createWalletPlanningForm()
         data = {
-            'ticker0':'ABEV3',
-            'quantity0':0,
-            'percent0':100,
-            'tokenForm':'',
-        } 
-        self.assertIsNone(forms.createWalletPlanningFormPOST(data))
-
-    def test_createWalletPlanningFormPOSTFailureSize2(self):
-        data = {
-            'ticker0':'ABEV3',
-            'ticker1':'ABEV3',
-            'quantity0':0,
-            'percent0':100,
             'capital':100,
-            'tokenForm':'',
+            'form-TOTAL_FORMS': '2',
+            'form-INITIAL_FORMS': '2',
+            'form-MIN_NUM_FORMS': '0',
+            'form-MAX_NUM_FORMS': '1000',
+            'form-0-ticker': 'ABEV3',
+            'form-0-quantity': '-2', 
+            'form-0-percent': '50',
+            'form-1-ticker': 'ITUB3',
+            'form-1-quantity': '2', 
+            'form-1-percent': '50',
         } 
-        self.assertIsNone(forms.createWalletPlanningFormPOST(data))
+        form = walletForm(data)
+        self.assertFalse(form.is_valid())
 
-    def test_createWalletPlanningFormPOSTFailureField(self):
+    def test_createWalletPlanningFormFailurePercent(self):
+        walletForm = forms.createWalletPlanningForm()
         data = {
-            'ticke2r0':'ABEV3',
-            'quantity0':0,
-            'percent0':100,
             'capital':100,
-            'tokenForm':'',
+            'form-TOTAL_FORMS': '2',
+            'form-INITIAL_FORMS': '2',
+            'form-MIN_NUM_FORMS': '0',
+            'form-MAX_NUM_FORMS': '1000',
+            'form-0-ticker': 'ABEV3',
+            'form-0-quantity': '2', 
+            'form-0-percent': '50',
+            'form-1-ticker': 'ITUB3',
+            'form-1-quantity': '2', 
+            'form-1-percent': '-50',
         } 
-        self.assertIsNone(forms.createWalletPlanningFormPOST(data))
-'''
+        form = walletForm(data)
+        self.assertFalse(form.is_valid())
+
+    def test_createWalletPlanningFormPOSTFailureTicker(self):
+        walletForm = forms.createWalletPlanningForm()
+        data = {
+            'capital':100,
+            'form-TOTAL_FORMS': '2',
+            'form-INITIAL_FORMS': '2',
+            'form-MIN_NUM_FORMS': '0',
+            'form-MAX_NUM_FORMS': '1000',
+            'form-0-ticker': 'ABEV3',
+            'form-0-quantity': '2', 
+            'form-0-percent': '50',
+            'form-1-ticker': '',
+            'form-1-quantity': '2', 
+            'form-1-percent': '50',
+        } 
+        form = walletForm(data)
+        self.assertFalse(form.is_valid())
 
 class ViewTestCase(TestCase):
     @classmethod
@@ -307,11 +305,14 @@ class ViewTestCase(TestCase):
 
     def test_confirmWalletPOSTSuccess(self):
         data = {
-            'ticker0':'ABEV3',
-            'quantity0':0,
-            'percent0':100,
             'capital':100,
-            'tokenForm':'',
+            'form-TOTAL_FORMS': '1',
+            'form-INITIAL_FORMS': '1',
+            'form-MIN_NUM_FORMS': '0',
+            'form-MAX_NUM_FORMS': '1000',
+            'form-0-ticker': 'ABEV3',
+            'form-0-quantity': '2', 
+            'form-0-percent': '100',
         } 
         response = self.client.post(reverse('confirmWallet'), data)
         
@@ -320,46 +321,75 @@ class ViewTestCase(TestCase):
             [template.name 
              for template in response.templates])
 
-    def test_confirmWalletPOSTWalletCreationFailure(self):
+    def test_confirmWalletPOSTFormFailure(self):
         data = {
-            'ticker0':'ABEV3',
-            'percent0':100,
-            'capital':100,
-            'tokenForm':'',
-        } 
+            'capital': '0',
+            'form-TOTAL_FORMS': '1',
+            'form-INITIAL_FORMS': '1',
+            'form-MIN_NUM_FORMS': '0',
+            'form-MAX_NUM_FORMS': '1000',
+            'form-0-ticker': 'ABEV3',
+            'form-0-quantity': '2', 
+            'form-0-percent': '100',
+        }
         response = self.client.post(reverse('confirmWallet'), data)
         
         self.assertFalse(
-            'rebalanceamento/confirmWallet.html' in 
+            'rebalanceamento/plotPlan.html' in 
             [template.name 
              for template in response.templates])
 
-    def test_confirmWalletPOSTFormFailure(self):
-        data = {
-            'ticker0':'ABEV3',
-            'quantity0':0,
-            'percent0':100,
-            'capital':0,
-            'tokenForm':'',
-        } 
-        response = self.client.post(reverse('confirmWallet'), data)
-        
-        self.assertTrue(
-            'rebalanceamento/confirmWallet.html' in 
-            [template.name 
-             for template in response.templates])
 
-    def test_confirmWalletPOSTFormFailure(self):
-        data = {
-            'ticker0':'AAAA3',
-            'quantity0':0,
-            'percent0':100,
-            'capital':100,
-            'tokenForm':'',
-        } 
-        response = self.client.post(reverse('confirmWallet'), data)
-        
-        self.assertFalse(
-            'rebalanceamento/confirmWallet.html' in 
-            [template.name 
-             for template in response.templates])
+class ModelTestCase(TransactionTestCase ):
+    def test_StockgetOrCreateStockOOSCurrentInvalid(self):
+        ticker = ''
+        yesterday = (timezone.now() - timezone.timedelta(days=1)).date()
+        stock = Stock(
+            ticker=ticker, name='Test', 
+            vpa=1, price=1,
+            day = yesterday)
+        stock.save()
+        stock = Stock.objects.get(ticker=ticker)
+        self.assertEqual(yesterday, stock.day) 
+        self.assertEqual(yesterday, stock.day)
+        stockUpdated = Stock.getOrCreate(ticker)
+        self.assertIsNone(stockUpdated)
+        self.assertRaises(Stock.DoesNotExist, 
+            lambda: Stock.objects.get(ticker=ticker))
+
+    def test_StockgetOrCreateStockOOSValid(self):
+        ticker = 'B3SA3'
+        yesterday = (timezone.now() - timezone.timedelta(days=1)).date()
+        stock = Stock(
+            ticker=ticker, name='Test', 
+            vpa=0, price=0,
+            day=yesterday)
+        stock.save()
+        stock = Stock.objects.get(ticker=ticker)
+        self.assertEqual(yesterday, stock.day) 
+        self.assertEqual(yesterday, stock.day)
+        stockUpdated = Stock.getOrCreate(ticker)
+        self.assertIsNotNone(stockUpdated)
+        self.assertNotEqual(stockUpdated.day, yesterday)
+        self.assertNotEqual(stockUpdated.name, 'Test')
+        self.assertNotEqual(stockUpdated.vpa, 0)
+        self.assertNotEqual(stockUpdated.price, 0)
+
+    def test_StockgetOrCreateStockSync(self):
+        ticker = 'B3SA3'
+        self.assertRaises(Stock.DoesNotExist, 
+            lambda: Stock.objects.get(ticker=ticker))
+        stockAdded = Stock.getOrCreate(ticker)
+        self.assertIsNotNone(stockAdded)
+        yesterday = (timezone.now() - timezone.timedelta(days=1)).date()
+        self.assertNotEqual(stockAdded.day, yesterday)
+        self.assertNotEqual(stockAdded.name, 'Test')
+        self.assertNotEqual(stockAdded.vpa, 0)
+        self.assertNotEqual(stockAdded.price, 0)
+
+    def test_StockgetOrCreateStockNotAddedInvalid(self):
+        ticker = ''
+        self.assertRaises(Stock.DoesNotExist, 
+            lambda: Stock.objects.get(ticker=ticker))
+        stockAdded = Stock.getOrCreate(ticker)
+        self.assertIsNone(stockAdded)

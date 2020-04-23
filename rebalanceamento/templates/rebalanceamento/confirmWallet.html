@@ -1,15 +1,94 @@
 {% extends 'rebalanceamento/base.html' %}
 {% block content %}
+
 <div class="d-flex align-items-center flex-column">
-Por favor, confirme as porcentagens de cada ativo e o valor do aporte:<br><br>
+Confirme o valor do aporte, o ticker, a quantidade de ações e as porcentagens de cada ativo:<br><br>
     <form action="{% url 'confirmWallet' %}" method="post">
         {% csrf_token %}
-        <div class="form-group col-6 m-0">
-			{{form.as_p}}
-            <br>
-            <input class="btn btn-primary login_btn" type="submit" value="Confirmar">
+        <div class="form-group col-6 m-0 pl-0">
+            <table class="table table-sm table-hover">
+                {{capitalForm.as_table}}
+            </table>
         </div>
+
+        {{walletFormSet.management_form}}
+        <table class="table table-sm table-hover">
+            <thead>
+                {% for form in walletFormSet %}
+                    {% if forloop.first %}
+                        {% for field in form %}
+                            <th scope="col">{{ field.label_tag }}</th>
+                        {% endfor %}
+                    {% endif %}
+                {% endfor %}
+            </thead>
+            <tbody>
+                {% for form in walletFormSet %}
+                    <tr scope="row" id="{{ form.prefix }}-row" class="dynamic-form">
+                        {% for field in form %}
+                            <td>{{ field }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% for form in walletFormSet %}
+            {% for key, errorList in form.errors.items %}
+                {{errorList}}
+            {% endfor %}
+        {% endfor %}
+        <button type="button" class="add-row btn btn-primary ">
+            +
+        </button>
+        <button type="button" class="delete-row btn btn-primary ">
+            -
+        </button>
+        <input class="btn btn-primary" type="submit" value="Confirmar">
     </form>
 </div>
+{% endblock %}
 
+{% block extraScripts %}
+<script type="text/javascript">
+	function updateElementIndex(el, ndx) {
+		var id_regex = new RegExp('\\d+');
+		if (el.id) el.id = el.id.replace(id_regex, ndx);
+		if (el.name) el.name = el.name.replace(id_regex, ndx);
+	}
+
+    function addForm(btn) {
+        var formCount = parseInt($('#id_form' + '-TOTAL_FORMS').val());
+        var row = $('.dynamic-form:first').clone(true).get(0);
+        
+        $(row).prop('id', 'form-' + formCount + '-row').insertAfter($('.dynamic-form:last'));
+        $(row).children().children().each(function() {
+            updateElementIndex(this, formCount);
+            $(this).val('');
+        });
+        $(row).find('.delete-row').click(function() {
+            deleteForm(this);
+        });
+        $('#id_form-TOTAL_FORMS').val(formCount + 1);
+    }
+
+    function deleteForm(btn) {
+        if ($('.dynamic-form').length > 1){
+            $('.dynamic-form:last').remove();
+            var forms = $('.dynamic-form');
+            $('#id_form-TOTAL_FORMS').val(forms.length);
+        }
+    }
+</script>
+    <script type="text/javascript">
+    <!--
+    $(function () {
+        $('.add-row').click(function() {
+    	    return addForm(this, 'form');
+        });
+        $('.delete-row').click(function() {
+    	    return deleteForm(this, 'form');
+        })
+    })
+    //-->
+    </script>
 {% endblock %}

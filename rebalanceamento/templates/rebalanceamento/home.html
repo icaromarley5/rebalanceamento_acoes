@@ -14,7 +14,7 @@
 			<form action="{% url 'home' %}" method="post"enctype="multipart/form-data">
 				{% csrf_token %}
 				{{form.as_p}}
-				<input class="btn btn-primary login_btn" type="submit" value="Confirmar">
+				<input class="btn btn-primary" type="submit" value="Confirmar">
 			</form>
 		</div>
 	</div>

@@ -1,85 +1,103 @@
 from django import forms
-from django.utils.safestring import mark_safe
+from django.forms import formset_factory
+from django.forms import BaseFormSet
 
 from django.core.validators import FileExtensionValidator
 
 import pandas as pd 
-from rebalanceamento import tickerData
+import numpy as np
+
+from rebalanceamento.models import Stock
+
+def processCSV(csvFile):
+    df = pd.DataFrame([])
+    try:
+        data = pd.read_csv(csvFile,sep='\t')
+        expected_columns = [
+            'Empresa', 'Tipo', 'Cód. de Negociação', 
+            'Cod.ISIN', 'Preço (R$)*','Qtde.', 
+            'Fator Cotação', 'Valor (R$)']
+        
+        tickerRegex = '^[\dA-Z]{4}([345678]|11|12|13)$'
+        if all(data.columns == expected_columns) \
+            and data['Qtde.'].dtype == np.dtype('int64') \
+            and all(data['Cód. de Negociação'].str.contains(tickerRegex, regex=True)):
+                data = data[['Cód. de Negociação','Qtde.']]
+                data.columns = ['Ticker','Quantidade']
+                data['Quantidade'] = data['Quantidade'].astype(int) 
+                df = data
+        else:
+            raise Exception('Unexpected data')
+    except Exception as e:
+        pass
+    return df
 
 class WalletDataForm(forms.Form):
     file = forms.FileField(validators=[FileExtensionValidator(['csv'])], 
         label='Arquivo CSV')
  
     def clean_file(self):
-        df = tickerData.processCSV(self.cleaned_data['file'])
+        df = processCSV(self.cleaned_data['file'])
         if df.empty:
             self.add_error('file','Conteúdo do arquivo não possui a formatação esperada')
         return df
 
-def createWalletPlanningForm(df):
-    def clean(self):
-        cleanedData = super(type(self), self).clean()
-        if self.is_valid():
-            capital = self.cleaned_data['capital']
-            if capital <= 0:
-                self.add_error(
-                    'capital', 
-                    'Valor precisa ser acima de zero.')
-            self.cleaned_data['capital'] = round(capital, 2) 
-            
-            total = 0
-            for i in range(self.nTickers):
-                i = str(i)
-                total +=  cleanedData['percent' + i]
-            if round(total, 2) != 100:
-                self.add_error(
-                    'percent0', 
-                    'A soma total precisa ser 100.'\
-                        'Soma atual: {:.2f}'.format(total))
-        return self.cleaned_data
-    
-    def __init__(self, *args, **kwargs):
-            super(type(self),self).__init__(
-                *args, 
-                **kwargs)
-            self.label_suffix = ''
-    nTickers = df.shape[0]
-    data_dict = {
-      'clean': clean,
-      'nTickers': nTickers,
-      '__init__': __init__,
-    }
-    percent = round(100 / nTickers, 2)
-    
-    for i,row in df.iterrows():
-        i = str(i)
-        data_dict['ticker' + i] = forms.CharField(
-                required=True, initial=row['Ticker'],
-                widget=forms.HiddenInput())
-        data_dict['quantity' + i] = forms.FloatField(
-                required=True, initial=row['Quantidade'],
-                widget=forms.HiddenInput())
-        data_dict['percent' + i] = forms.FloatField(
-            label=mark_safe(row['Ticker']),
-            required=True, initial=percent, 
+class WalletPlanningForm(forms.Form):
+    ticker = forms.CharField(
+            required=True, label='Ticker')
+    quantity = forms.FloatField(
+            required=True, label='Quantidade',
+            min_value=0,
+            widget=forms.NumberInput(
+                attrs={'step': '1'}))
+    percent = forms.FloatField(
+            label='Porcentagem',
+            required=True, 
+            min_value=0,
             widget=forms.NumberInput(
                 attrs={'step': '0.01'}))
-    data_dict['capital'] = forms.FloatField(
-        label=mark_safe('Aporte'), 
-        required=True)
-    return type('WalletClass', (forms.Form,), data_dict)
+    
+    def clean_ticker(self):
+        ticker = self.cleaned_data['ticker']
+        if not Stock.getOrCreate(ticker):
+            self.add_error(
+                'ticker',
+                f'Ticker inválido: {ticker}')
+        return ticker
 
-def createWalletPlanningFormPOST(data):
-    if (len(data)-2) % 3 == 0:
-        nRows = (len(data)-2) // 3
-        columns = ['capital']
-        columns += ['ticker' + str(i) for i in range(nRows)]
-        columns += ['percent' + str(i) for i in range(nRows)]
-        columns += ['quantity' + str(i) for i in range(nRows)]
-        
-        if len(set(list(data.keys()) + columns)) == len(columns) + 1: # same keys
-            df = pd.DataFrame([])
-            df['Ticker'] = [data['ticker' + str(i)] for i in range(nRows)]
-            df['Quantidade'] = [data['quantity' + str(i)] for i in range(nRows)]
-            return createWalletPlanningForm(df)
-    return None
+class CapitalForm(forms.Form):
+    capital = forms.FloatField(
+            label='Aporte', 
+            required=True,
+            min_value=0.01)
+    def clean_capital(self):
+        capital = self.cleaned_data['capital']
+        return round(capital, 2)
+
+class WalletPlanningFormSet(BaseFormSet):
+    def clean(self):
+        if any(self.errors):
+             return 
+        percentTotal = 0
+        for form in self.forms:
+            percentTotal += form.cleaned_data.get('percent')
+        if round(percentTotal,2) != 100:
+            form.add_error(
+                'percent',
+                f'Porcentagens não somam 100%. Soma calculada : {percentTotal:.2f}%')
+
+def createWalletPlanningForm(df=None):
+    WalletFormSet = formset_factory(
+        WalletPlanningForm,
+        formset=WalletPlanningFormSet, extra=0)  
+    formset = WalletFormSet
+    if df is not None:
+        nTickers = df.shape[0]
+        percent = round(100 / nTickers, 2)
+        initialData = [
+            {'ticker': df['Ticker'].iloc[i],
+            'quantity': df['Quantidade'].iloc[i],
+            'percent':percent} for i in range(nTickers)]
+        formset = WalletFormSet(
+            initial=initialData)
+    return formset

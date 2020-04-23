@@ -1,0 +1,28 @@
+CONFIRMAÇÃO 
+autofill por nome ou ticker com pesquisa no db
+Link em home para adicionar do zero sem arquivo
+atualizar testes
+executar testes
+
+confirmação mostrar porcentagem total
+
+REBALANCEAMENTO
+Considerar queda no mês como menor prioridade no planejamento
+
+SERVIDOR 
+adicionar as coisas do plotly para evitar sobrecarga de rede
+considerar trocar db 
+
+DEPLOY
+pesquisar deploys gratuitos
+considerar python anywhere
+https://github.com/icaromarley5/rebalanceamento_acoes/
+https://about.gitlab.com/pricing/#gitlab-com
+https://www.netlify.com/pricing/
+https://glitch.com/
+https://aws.amazon.com/amplify/console/pricing/?nc=sn&loc=2
+
+NETWORKING
+mostrar LinkedIn 
+mostrar reddit 
+mostrar trademap
