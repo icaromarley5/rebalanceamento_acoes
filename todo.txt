@@ -1,20 +1,24 @@
-CONFIRMAÇÃO 
-autofill por nome ou ticker com pesquisa no db
-Link em home para adicionar do zero sem arquivo
-atualizar testes
-executar testes
-
-confirmação mostrar porcentagem total
-
 REBALANCEAMENTO
-Considerar queda no mês como menor prioridade no planejamento
-
-SERVIDOR 
-adicionar as coisas do plotly para evitar sobrecarga de rede
-considerar trocar db 
-
+Considerar queda no mês/semana/dia como menor prioridade no planejamento?
+    puxar dados de desvalorização?
+    def get_tickers_price(ticker_list):    
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1)'\
+                ' AppleWebKit/537.36 (KHTML, like Gecko)'\
+                    ' Chrome/39.0.2171.95 Safari/537.36'
+        }
+        prices = []
+        regex = re.compile('.+Venda = .+')
+        for ticker in ticker_list:
+                url = 'http://www.grafbolsa.net/cgi-bin/al.pl/' + ticker.lower()
+                r = requests.get(url,headers=headers)
+                soup = BeautifulSoup(r.text)
+                prices.append(float(soup.find(text=regex)\
+                                        .split('Venda = ')[1].strip()))     
+    return prices
+    
 DEPLOY
-pesquisar deploys gratuitos
+ver deploys gratuitos
 considerar python anywhere
 https://github.com/icaromarley5/rebalanceamento_acoes/
 https://about.gitlab.com/pricing/#gitlab-com
@@ -26,3 +30,4 @@ NETWORKING
 mostrar LinkedIn 
 mostrar reddit 
 mostrar trademap
+mostrar telegram

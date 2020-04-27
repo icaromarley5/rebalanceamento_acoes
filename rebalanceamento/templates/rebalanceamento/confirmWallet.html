@@ -12,7 +12,11 @@ Confirme o valor do aporte, o ticker, a quantidade de ações e as porcentagens 
         </div>
 
         {{walletFormSet.management_form}}
-        <table class="table table-sm table-hover">
+        <table id="formset-table-empty" style="display: none">
+            {{walletFormSet.empty_form}}
+        </table>
+
+        <table class="table  table-hover">
             <thead>
                 {% for form in walletFormSet %}
                     {% if forloop.first %}
@@ -22,14 +26,15 @@ Confirme o valor do aporte, o ticker, a quantidade de ações e as porcentagens 
                     {% endif %}
                 {% endfor %}
             </thead>
-            <tbody>
+            <tbody class="walletForm">
                 {% for form in walletFormSet %}
-                    <tr scope="row" id="{{ form.prefix }}-row" class="dynamic-form">
+                    <tr class="dynamic-form">
                         {% for field in form %}
                             <td>{{ field }}</td>
                         {% endfor %}
                     </tr>
                 {% endfor %}
+                <tr class="dynamic-form"> </tr>
             </tbody>
         </table>
         {% for form in walletFormSet %}
@@ -49,46 +54,38 @@ Confirme o valor do aporte, o ticker, a quantidade de ações e as porcentagens 
 {% endblock %}
 
 {% block extraScripts %}
-<script type="text/javascript">
-	function updateElementIndex(el, ndx) {
-		var id_regex = new RegExp('\\d+');
-		if (el.id) el.id = el.id.replace(id_regex, ndx);
-		if (el.name) el.name = el.name.replace(id_regex, ndx);
-	}
+{{ walletFormSet.media }}
 
-    function addForm(btn) {
-        var formCount = parseInt($('#id_form' + '-TOTAL_FORMS').val());
-        var row = $('.dynamic-form:first').clone(true).get(0);
-        
-        $(row).prop('id', 'form-' + formCount + '-row').insertAfter($('.dynamic-form:last'));
-        $(row).children().children().each(function() {
-            updateElementIndex(this, formCount);
-            $(this).val('');
+<script>
+    $('.add-row').click(function() {
+        var index = $('#id_form-TOTAL_FORMS').val();
+        var newRow = $('#formset-table-empty').clone(true);
+        newRow.find(':input').each(function() {
+            for (attr of ['name', 'id'])
+                $(this).attr(
+                    attr,
+                    $(this).attr(attr).replace('__prefix__', index)
+                )
         });
-        $(row).find('.delete-row').click(function() {
-            deleteForm(this);
-        });
-        $('#id_form-TOTAL_FORMS').val(formCount + 1);
-    }
-
+        var lastRow = $(".dynamic-form:last");
+        lastRow.clone().appendTo('.walletForm');
+        newRow.find('td').appendTo(lastRow);
+        $('#id_form-TOTAL_FORMS').val(
+            parseInt($('#id_form-TOTAL_FORMS').val()) + 1
+        );
+    });
     function deleteForm(btn) {
-        if ($('.dynamic-form').length > 1){
-            $('.dynamic-form:last').remove();
-            var forms = $('.dynamic-form');
-            $('#id_form-TOTAL_FORMS').val(forms.length);
+        if ($('.dynamic-form').length > 2){
+            $('.dynamic-form:last').prev().remove();
+            $('#id_form-TOTAL_FORMS').val(
+            parseInt($('#id_form-TOTAL_FORMS').val()) - 1
+            );
         }
     }
+    $('.delete-row').click(function() {
+        return deleteForm(this);
+    });
 </script>
-    <script type="text/javascript">
-    <!--
-    $(function () {
-        $('.add-row').click(function() {
-    	    return addForm(this, 'form');
-        });
-        $('.delete-row').click(function() {
-    	    return deleteForm(this, 'form');
-        })
-    })
-    //-->
-    </script>
+ 
+
 {% endblock %}

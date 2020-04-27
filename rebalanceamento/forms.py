@@ -4,6 +4,8 @@ from django.forms import BaseFormSet
 
 from django.core.validators import FileExtensionValidator
 
+from dal import autocomplete
+
 import pandas as pd 
 import numpy as np
 
@@ -33,7 +35,9 @@ def processCSV(csvFile):
     return df
 
 class WalletDataForm(forms.Form):
-    file = forms.FileField(validators=[FileExtensionValidator(['csv'])], 
+    file = forms.FileField(
+        required=False,
+        validators=[FileExtensionValidator(['csv'])], 
         label='Arquivo CSV')
  
     def clean_file(self):
@@ -43,8 +47,13 @@ class WalletDataForm(forms.Form):
         return df
 
 class WalletPlanningForm(forms.Form):
-    ticker = forms.CharField(
-            required=True, label='Ticker')
+    ticker = forms.ModelChoiceField(
+        queryset=Stock.objects.all(),
+        widget=autocomplete.ModelSelect2(
+            url='stock-autocomplete',
+            attrs={
+                'data-minimum-input-length': 3,})
+    )
     quantity = forms.FloatField(
             required=True, label='Quantidade',
             min_value=0,
@@ -59,7 +68,10 @@ class WalletPlanningForm(forms.Form):
     
     def clean_ticker(self):
         ticker = self.cleaned_data['ticker']
-        if not Stock.getOrCreate(ticker):
+        try:
+            ticker = Stock.objects.get(ticker=ticker)
+        except Exception as e:
+            raise e
             self.add_error(
                 'ticker',
                 f'Ticker inválido: {ticker}')

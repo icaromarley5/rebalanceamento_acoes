@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+import sys
+
+SERVER = 'runserver' in sys.argv
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -27,9 +30,28 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'rebalanceamento': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+    },
+}
+
 # Application definition
 
 INSTALLED_APPS = [
+    'dal',
+    'dal_select2',
+    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -118,4 +140,5 @@ TIME_ZONE = 'UTC'
 
 STATIC_URL = '/static/'
 
-STATICFILES_DIRS = (os.path.join('static'),)
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')

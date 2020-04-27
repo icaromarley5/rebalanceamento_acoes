@@ -104,7 +104,21 @@ class TickerDataTestCase(TestCase):
         self.assertIsNone(tickerData.findTickerInfo(''))
         self.assertIsNone(tickerData.findTickerInfo('QWEWEW'))
 
-class FormTestCase(TestCase):
+class FormTestCase(TransactionTestCase):
+    def setUp(self):
+        Stock.objects.create(
+            ticker='TEST1',
+            name='Test SA',
+            price=1.1,
+            vpa=1.1,
+            day=timezone.now().date())
+        Stock.objects.create(
+            ticker='TEST2',
+            name='Test2 SA',
+            price=1.1,
+            vpa=1.1,
+            day=timezone.now().date())
+
     def test_WalletDataFormTypeSuccess(self):
         self.assertTrue(submitFile('valid.csv'))
 
@@ -149,10 +163,10 @@ class FormTestCase(TestCase):
             'form-INITIAL_FORMS': '2',
             'form-MIN_NUM_FORMS': '0',
             'form-MAX_NUM_FORMS': '1000',
-            'form-0-ticker': 'ABEV3',
+            'form-0-ticker': Stock.objects.first(),
             'form-0-quantity': '2', 
             'form-0-percent': '50',
-            'form-1-ticker': 'ITUB3',
+            'form-1-ticker': Stock.objects.last(),
             'form-1-quantity': '2', 
             'form-1-percent': '50',
         } 
@@ -167,10 +181,10 @@ class FormTestCase(TestCase):
             'form-INITIAL_FORMS': '2',
             'form-MIN_NUM_FORMS': '0',
             'form-MAX_NUM_FORMS': '1000',
-            'form-0-ticker': 'ABEV3',
+            'form-0-ticker': Stock.objects.first(),
             'form-0-quantity': '2', 
             'form-0-percent': '50',
-            'form-1-ticker': 'ITUB3',
+            'form-1-ticker': Stock.objects.last(),
             'form-1-quantity': '2', 
             'form-1-percent': '50',
         } 
@@ -185,10 +199,10 @@ class FormTestCase(TestCase):
             'form-INITIAL_FORMS': '2',
             'form-MIN_NUM_FORMS': '0',
             'form-MAX_NUM_FORMS': '1000',
-            'form-0-ticker': 'ABEV3',
+            'form-0-ticker': Stock.objects.first(),
             'form-0-quantity': '2', 
             'form-0-percent': '50',
-            'form-1-ticker': 'ITUB3',
+            'form-1-ticker': Stock.objects.last(),
             'form-1-quantity': '2', 
             'form-1-percent': '51',
         } 
@@ -202,10 +216,10 @@ class FormTestCase(TestCase):
             'form-INITIAL_FORMS': '2',
             'form-MIN_NUM_FORMS': '0',
             'form-MAX_NUM_FORMS': '1000',
-            'form-0-ticker': 'ABEV3',
+            'form-0-ticker': Stock.objects.first(),
             'form-0-quantity': '2', 
             'form-0-percent': '50',
-            'form-1-ticker': 'ITUB3',
+            'form-1-ticker': Stock.objects.last(),
             'form-1-quantity': '2', 
             'form-1-percent': '50',
         } 
@@ -220,10 +234,10 @@ class FormTestCase(TestCase):
             'form-INITIAL_FORMS': '2',
             'form-MIN_NUM_FORMS': '0',
             'form-MAX_NUM_FORMS': '1000',
-            'form-0-ticker': 'ABEV3',
+            'form-0-ticker': Stock.objects.first(),
             'form-0-quantity': '-2', 
             'form-0-percent': '50',
-            'form-1-ticker': 'ITUB3',
+            'form-1-ticker': Stock.objects.last(),
             'form-1-quantity': '2', 
             'form-1-percent': '50',
         } 
@@ -238,10 +252,10 @@ class FormTestCase(TestCase):
             'form-INITIAL_FORMS': '2',
             'form-MIN_NUM_FORMS': '0',
             'form-MAX_NUM_FORMS': '1000',
-            'form-0-ticker': 'ABEV3',
+            'form-0-ticker': Stock.objects.first(),
             'form-0-quantity': '2', 
             'form-0-percent': '50',
-            'form-1-ticker': 'ITUB3',
+            'form-1-ticker': Stock.objects.last(),
             'form-1-quantity': '2', 
             'form-1-percent': '-50',
         } 
@@ -256,7 +270,7 @@ class FormTestCase(TestCase):
             'form-INITIAL_FORMS': '2',
             'form-MIN_NUM_FORMS': '0',
             'form-MAX_NUM_FORMS': '1000',
-            'form-0-ticker': 'ABEV3',
+            'form-0-ticker': Stock.objects.first(),
             'form-0-quantity': '2', 
             'form-0-percent': '50',
             'form-1-ticker': '',
@@ -266,11 +280,25 @@ class FormTestCase(TestCase):
         form = walletForm(data)
         self.assertFalse(form.is_valid())
 
-class ViewTestCase(TestCase):
+class ViewTestCase(TransactionTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.client = Client()
+    
+    def setUp(self):
+        Stock(
+            ticker='TEST1',
+            name='Test SA',
+            price=1.1,
+            vpa=1.1,
+            day=timezone.now().date()).save()
+        Stock(
+            ticker='TEST2',
+            name='Test2 SA',
+            price=1.1,
+            vpa=1.1,
+            day=timezone.now().date()).save()
     
     def test_viewHomeGET(self):
         response = self.client.get(
@@ -291,7 +319,7 @@ class ViewTestCase(TestCase):
     def test_viewHomePOSTFailure(self):
         response = self.client.post(
             reverse('home'), {'file':getFileData('invalidType.txt')})
-        self.assertFalse(
+        self.assertTrue(
             'rebalanceamento/confirmWallet.html' in 
             [template.name 
              for template in response.templates])
@@ -310,12 +338,11 @@ class ViewTestCase(TestCase):
             'form-INITIAL_FORMS': '1',
             'form-MIN_NUM_FORMS': '0',
             'form-MAX_NUM_FORMS': '1000',
-            'form-0-ticker': 'ABEV3',
+            'form-0-ticker': Stock.objects.first(),
             'form-0-quantity': '2', 
             'form-0-percent': '100',
         } 
         response = self.client.post(reverse('confirmWallet'), data)
-        
         self.assertTrue(
             'rebalanceamento/plotPlan.html' in 
             [template.name 
@@ -328,7 +355,7 @@ class ViewTestCase(TestCase):
             'form-INITIAL_FORMS': '1',
             'form-MIN_NUM_FORMS': '0',
             'form-MAX_NUM_FORMS': '1000',
-            'form-0-ticker': 'ABEV3',
+            'form-0-ticker': Stock.objects.first(),
             'form-0-quantity': '2', 
             'form-0-percent': '100',
         }
@@ -338,58 +365,3 @@ class ViewTestCase(TestCase):
             'rebalanceamento/plotPlan.html' in 
             [template.name 
              for template in response.templates])
-
-
-class ModelTestCase(TransactionTestCase ):
-    def test_StockgetOrCreateStockOOSCurrentInvalid(self):
-        ticker = ''
-        yesterday = (timezone.now() - timezone.timedelta(days=1)).date()
-        stock = Stock(
-            ticker=ticker, name='Test', 
-            vpa=1, price=1,
-            day = yesterday)
-        stock.save()
-        stock = Stock.objects.get(ticker=ticker)
-        self.assertEqual(yesterday, stock.day) 
-        self.assertEqual(yesterday, stock.day)
-        stockUpdated = Stock.getOrCreate(ticker)
-        self.assertIsNone(stockUpdated)
-        self.assertRaises(Stock.DoesNotExist, 
-            lambda: Stock.objects.get(ticker=ticker))
-
-    def test_StockgetOrCreateStockOOSValid(self):
-        ticker = 'B3SA3'
-        yesterday = (timezone.now() - timezone.timedelta(days=1)).date()
-        stock = Stock(
-            ticker=ticker, name='Test', 
-            vpa=0, price=0,
-            day=yesterday)
-        stock.save()
-        stock = Stock.objects.get(ticker=ticker)
-        self.assertEqual(yesterday, stock.day) 
-        self.assertEqual(yesterday, stock.day)
-        stockUpdated = Stock.getOrCreate(ticker)
-        self.assertIsNotNone(stockUpdated)
-        self.assertNotEqual(stockUpdated.day, yesterday)
-        self.assertNotEqual(stockUpdated.name, 'Test')
-        self.assertNotEqual(stockUpdated.vpa, 0)
-        self.assertNotEqual(stockUpdated.price, 0)
-
-    def test_StockgetOrCreateStockSync(self):
-        ticker = 'B3SA3'
-        self.assertRaises(Stock.DoesNotExist, 
-            lambda: Stock.objects.get(ticker=ticker))
-        stockAdded = Stock.getOrCreate(ticker)
-        self.assertIsNotNone(stockAdded)
-        yesterday = (timezone.now() - timezone.timedelta(days=1)).date()
-        self.assertNotEqual(stockAdded.day, yesterday)
-        self.assertNotEqual(stockAdded.name, 'Test')
-        self.assertNotEqual(stockAdded.vpa, 0)
-        self.assertNotEqual(stockAdded.price, 0)
-
-    def test_StockgetOrCreateStockNotAddedInvalid(self):
-        ticker = ''
-        self.assertRaises(Stock.DoesNotExist, 
-            lambda: Stock.objects.get(ticker=ticker))
-        stockAdded = Stock.getOrCreate(ticker)
-        self.assertIsNone(stockAdded)
