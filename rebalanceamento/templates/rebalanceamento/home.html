@@ -5,8 +5,9 @@
 <div class="d-flex justify-content-sm-around">
 	<div class="w-50">
 		<p class="text-justify">
-			Para continuar, carregue um arquivo CSV com seus ativos.
-			<br>Ele pode ser gerado no <a href="https://cei.b3.com.br/">CEI</a>, em "Carteira de ativos", copiando a tabela gerada (sem o cabeçalho e rodapé).
+			Caso deseje preencher automaticamente sua carteira, carregue um arquivo "CSV" com seus ativos.
+			</br>Ele pode ser gerado no <a href="https://cei.b3.com.br/">CEI</a>, em "Carteira de ativos".</br>
+			Basta copiar a tabela gerada (sem o cabeçalho e rodapé) e colar num editor de texto e salvar com a extensão "CSV".
 		</p>
 	</div>
 	<div class="w-25">
@@ -14,7 +15,7 @@
 			<form action="{% url 'home' %}" method="post"enctype="multipart/form-data">
 				{% csrf_token %}
 				{{form.as_p}}
-				<input class="btn btn-primary" type="submit" value="Confirmar">
+				<input class="btn btn-primary" type="submit" value="Continuar">
 			</form>
 		</div>
 	</div>

@@ -38,7 +38,9 @@ class WalletDataForm(forms.Form):
     file = forms.FileField(
         required=False,
         validators=[FileExtensionValidator(['csv'])], 
-        label='Arquivo CSV')
+        label='Arquivo CSV',
+        widget=forms.FileInput(attrs={
+            'class':'form-control-file border border-grey'}))
  
     def clean_file(self):
         df = processCSV(self.cleaned_data['file'])
@@ -52,19 +54,25 @@ class WalletPlanningForm(forms.Form):
         widget=autocomplete.ModelSelect2(
             url='stock-autocomplete',
             attrs={
+                'class':'form-control p-0 m-0 border border-grey',
                 'data-minimum-input-length': 3,})
     )
     quantity = forms.FloatField(
             required=True, label='Quantidade',
             min_value=0,
             widget=forms.NumberInput(
-                attrs={'step': '1'}))
+                attrs={
+                    'class':'form-control form-control-sm border border-grey',
+                    'step': '1'}))
+
     percent = forms.FloatField(
             label='Porcentagem',
             required=True, 
             min_value=0,
             widget=forms.NumberInput(
-                attrs={'step': '0.01'}))
+                attrs={
+                    'class':'form-control form-control-sm border border-grey',
+                    'step': '0.01'}))
     
     def clean_ticker(self):
         ticker = self.cleaned_data['ticker']
@@ -81,7 +89,10 @@ class CapitalForm(forms.Form):
     capital = forms.FloatField(
             label='Aporte', 
             required=True,
-            min_value=0.01)
+            min_value=0.01,
+            widget=forms.NumberInput(
+                attrs={
+                    'class':'form-control border border-grey'}))
     def clean_capital(self):
         capital = self.cleaned_data['capital']
         return round(capital, 2)
