@@ -19,8 +19,8 @@ def computePlan(planDf,capital):
     df['PorcentagemAtual'] = df['Valor'] * 100 / df['Valor'].sum()
     df['distance'] = df['PorcentagemAlvo'] - df['PorcentagemAtual']
     
-    df.sort_values(['distance','Preço'], 
-                   ascending=False, 
+    df.sort_values(['distance','PVP'], 
+                   ascending=[False, True], 
                    inplace=True)
     
     for _,row in df.iterrows():
@@ -44,6 +44,7 @@ def computePlan(planDf,capital):
         if waitFor:          
             break
     if not waitFor:
+        waitForAux = None
         # rebalancing done without problems
         # invest the remaining capital
         df['ValorPlanejado'] = (df['Quantidade'] + df['QuantidadeParaComprar'])\
@@ -52,8 +53,8 @@ def computePlan(planDf,capital):
         df['PorcentagemPlanejada'] = df['ValorPlanejado'] * 100 \
             / df['ValorPlanejado'].sum()
         df['distancePlanned'] = df['PorcentagemAlvo'] - df['PorcentagemPlanejada']
-        df.sort_values(['distancePlanned', 'Preço'],
-                       ascending=False, inplace=True)
+        df.sort_values(['distancePlanned', 'PVP'],
+                       ascending=[False, True], inplace=True)
         
         for _,row in df.iterrows():
             distanceNow = abs(row['PorcentagemAlvo'] - row['PorcentagemPlanejada'])
@@ -70,7 +71,7 @@ def computePlan(planDf,capital):
                     else:
                         # not enough capital
                         quant -= 1
-                        waitFor = row['Ticker']
+                        waitForAux = row['Ticker']
                         break
                 else:
                     # distance can't be minimized
@@ -81,7 +82,7 @@ def computePlan(planDf,capital):
                 quant = 1
             nonAllocatedCapital -= row['Preço'] * quant
             df.loc[row.name,'QuantidadeParaComprar'] += quant
-            if waitFor:
+            if waitForAux:
                 break
     
     df['ValorPlanejado'] = (
@@ -92,4 +93,4 @@ def computePlan(planDf,capital):
     df['distancePlanned'] = df['PorcentagemAlvo'] \
         - df['PorcentagemPlanejada']
 
-    return df, nonAllocatedCapital
+    return df, nonAllocatedCapital, waitFor

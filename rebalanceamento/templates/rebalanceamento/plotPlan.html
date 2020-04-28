@@ -22,6 +22,11 @@
         {% endfor %}
         </tbody>
       </table>
+    
+      {% if waitFor %}
+        </br>Não foi possível rebalancear completamente por causa do tamanho do aporte.</br>
+        Sugestão: juntar capital para aportar em: </br></br><b>{{waitFor}}</b></br></br>
+      {% endif %}
     </div>
   </div>
   <br>

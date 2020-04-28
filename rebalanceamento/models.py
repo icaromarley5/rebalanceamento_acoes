@@ -8,6 +8,7 @@ class Stock(models.Model):
     name = models.CharField(max_length=100)
     price = models.FloatField(validators=[MinValueValidator(0)])
     vpa = models.FloatField(validators=[MinValueValidator(0)])
+    pvp = models.FloatField(validators=[MinValueValidator(0)])
     day = models.DateField()
     def __str__(self):
         return self.ticker

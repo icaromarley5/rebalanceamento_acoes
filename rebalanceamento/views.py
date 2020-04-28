@@ -48,19 +48,21 @@ def confirmWallet(request):
             df.columns = ['Ticker','Quantidade','PorcentagemAlvo']
             df['VPA'] = df['Ticker'].apply(lambda x:x.vpa)
             df['Preço'] = df['Ticker'].apply(lambda x:x.price)
+            df['PVP'] = df['Ticker'].apply(lambda x:x.pvp)
             df['Ticker'] = df['Ticker'].apply(lambda x:x.ticker)
             capital = capitalForm.cleaned_data['capital']
-            plan, nonAllocatedCapital = planner.computePlan(
+            plan, nonAllocatedCapital, waitFor = planner.computePlan(
                 pd.DataFrame(df), capital)
             dataToPlot = {
                     'plan': plan,
                     'allocatedCapital': capital - nonAllocatedCapital,
                     'nonAllocatedCapital': nonAllocatedCapital, }
-            plots = dataPlots.createPlots(dataToPlot)
+            data = {'waitFor':waitFor}
+            data.update(dataPlots.createPlots(dataToPlot))
             return render(
                 request, 
                 'rebalanceamento/plotPlan.html',
-                plots) 
+                data) 
         return render(
             request, 
             'rebalanceamento/confirmWallet.html',

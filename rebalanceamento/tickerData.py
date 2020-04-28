@@ -46,6 +46,10 @@ def findTickerInfo(ticker):
             float(soup.find(
                 'span',
                 text='VPA').find_next('td').text.replace(',','.'))
+        tickerInfoAux['PVP'] = \
+            float(soup.find(
+                'span',
+                text='P/VP').find_next('td').text.replace(',','.'))
         tickerInfoAux['Nome'] = \
             soup.find(
                 'span',

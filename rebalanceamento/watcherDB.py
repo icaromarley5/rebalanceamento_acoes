@@ -19,6 +19,7 @@ def addStock(ticker, today):
             stock.name = info['Nome']
             stock.price = info['Preço']
             stock.vpa = info['VPA']
+            stock.pvp = info['PVP']
             stock.day = today
             stock.save()
         except:
@@ -27,6 +28,7 @@ def addStock(ticker, today):
                 name=info['Nome'],
                 price=info['Preço'],
                 vpa=info['VPA'],
+                pvp = info['PVP'],
                 day=today).save()
 
 def watcherFillDB():
