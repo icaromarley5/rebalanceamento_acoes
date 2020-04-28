@@ -14,9 +14,9 @@ Essa aplicação é bastante útil para adpetos da filosofia Buy and Hold pois:
 
 ## Descrição detalhada
 A aplicação recebe um arquivo de tipo CSV, gerado a partir do site do CEI (Canal Eletrônico do Investidor). 
-Este arquivo é usado apenas para coletar quais ativos estão na carteira.
+Este arquivo é usado apenas para coletar quais ativos estão na carteira. O envio do arquivo é completamente opcional.
 
-Após a inserção do aqruivo, o usuário é redirecionado para uma tela onde é possível estabelecer as porcentagens alvo de cada ativo e o valor do aporte.
+Após a inserção do arquivo, o usuário é redirecionado para uma tela onde é possível estabelecer as porcentagens alvo de cada ativo e o valor do aporte.
 
 A tela final é exibida após a inserção desses dados. Nela, podem ser analisados:
 
@@ -29,7 +29,7 @@ A tela final é exibida após a inserção desses dados. Nela, podem ser analisa
 #### Como o rebalanceamento é calculado
 O rebalanceamento prioriza:
 1. o maior atraso em relação à porcentagem automaticamente definida (100/número de ações), aplicada sobre o total da carteira (desconsiderando aporte) 
-2. maior cotação
+2. menor indicador PVP (Preço sobre valor patrimonial)
 
 Para cada ativo, o script tenta atingir essa porcentagem (caso esteja atrasado) ou pelo menos comprar 1 ativo.
 
@@ -52,7 +52,6 @@ Similar ao rebalanceamento, o objetivo é comprar pelo menos 1 ação de cada at
 * Confirmação de carteira
 
 ![Tela de confirmação-1](imgs/confirm1.JPG)
-![Tela de confirmação-2](imgs/confirm2.JPG)
 
 * Tabela de recomendações
 
