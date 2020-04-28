@@ -93,4 +93,6 @@ def computePlan(planDf,capital):
     df['distancePlanned'] = df['PorcentagemAlvo'] \
         - df['PorcentagemPlanejada']
 
+    if nonAllocatedCapital != capital:
+        waitFor = None
     return df, nonAllocatedCapital, waitFor
