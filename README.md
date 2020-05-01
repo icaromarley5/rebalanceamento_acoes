@@ -38,11 +38,13 @@ O investimento é feito com o restante do aporte, após um rebalanceamento que c
 Nele, apenas a maior cotação é utilizada como meio de ordenação e a porcentagem é aplicada apenas no restante do aporte.
 Similar ao rebalanceamento, o objetivo é comprar pelo menos 1 ação de cada ativo.
 
-## Principais Bibliotecas utilizadas: 
+## Principais tecnologias utilizadas: 
 * Django (servidor web)
 * Plotly (visualização de gráficos sobre a carteira)
 * Pandas e Numpy (manipulação de dados) 
 * Requests (Web Scraping para adquirir informações dos ativos)
+* Boostrap (aparência do site)
+* Jquery (recurso de autofill e adicionar/remover linhas dinamicamente) 
 
 ## Telas da aplicação
 * Tela inicial
