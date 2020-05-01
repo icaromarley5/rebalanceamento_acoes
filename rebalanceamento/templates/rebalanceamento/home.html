@@ -2,22 +2,21 @@
 
 {% block content %}
 
-<div class="d-flex justify-content-sm-around">
-	<div class="w-50">
-		<p class="text-justify">
+<div align="center">
+		<p>
 			Caso deseje preencher automaticamente sua carteira, carregue um arquivo "CSV" com seus ativos.
-			</br>Ele pode ser gerado no <a href="https://cei.b3.com.br/">CEI</a>, em "Carteira de ativos".</br>
-			Basta copiar a tabela gerada (sem o cabeçalho e rodapé) e colar num editor de texto e salvar com a extensão "CSV".
+			</br>
+			<small>
+				Ele pode ser gerado no <a href="https://cei.b3.com.br/">CEI</a>, em "Carteira de ativos". Basta copiar a tabela gerada (sem o cabeçalho e rodapé) e colar num editor de texto e salvar com a extensão "CSV".
+			</small>
 		</p>
-	</div>
-	<div class="w-25">
-		<div class="d-flex justify-content-center">
-			<form action="{% url 'home' %}" method="post"enctype="multipart/form-data">
-				{% csrf_token %}
+		<form action="{% url 'home' %}" method="post"enctype="multipart/form-data">
+			{% csrf_token %}
+			<div class="w-25">
 				{{form.as_p}}
-				<input class="btn btn-primary" type="submit" value="Continuar">
-			</form>
-		</div>
-	</div>
+			</div>
+			<input class="btn btn-primary" type="submit" value="Continuar">
+		</form>	
+
 </div>
 {% endblock %}

@@ -6,11 +6,13 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title>Rebalanceamento de carteira</title>
         <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-        
+        <link rel="shortcut icon" href="{%  static 'favicon/favicon.png' %}">
+        {% block style %}
+        {% endblock %}
    </head>
     <body class="bg-primary">
         	<div class="d-flex justify-content-center h-70 mt-4">
-	        	<div class="card bg-white mt-4 mb-4 border-dark rounded-4 shadow-lg" style="width: 50rem;">
+	        	<div class="card bg-white border-dark rounded-4 shadow-lg" style="min-width:150vmin;">
                     <div class="card-header text-center border-dark rounded-4">
                         <h1 class="card-title mt-4">
                             Rebalanceamento de carteira

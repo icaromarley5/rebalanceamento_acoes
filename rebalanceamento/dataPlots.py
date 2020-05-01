@@ -45,7 +45,8 @@ def plotWalletAllocation(allocatedCapital, nonAllocatedCapital):
         texttemplate='%{percent}')
     fig.update_layout(
         separators = ',')
-    return fig.to_html(full_html=False)
+    return fig.to_html(full_html=False,
+        config={'responsive':True})
 
 def plotFactor(plan):
     #bar plot balancing factor

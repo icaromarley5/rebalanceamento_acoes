@@ -25,9 +25,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '_lj72we)wu@iarq0f5#ljx1j)u-4g%g%z9=bcg(^2^=b8q*s5h'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['icaromarley5.pythonanywhere.com']
+ALLOWED_HOSTS = []
 
 
 LOGGING = {

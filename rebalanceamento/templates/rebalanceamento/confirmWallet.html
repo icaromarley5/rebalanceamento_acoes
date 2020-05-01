@@ -1,14 +1,19 @@
 {% extends 'rebalanceamento/base.html' %}
+
+{% block style %}
+<style>
+    .select2-container{
+        min-width:25vmin !important;
+    }
+    .select2-dropdown.select2-dropdown--below{
+        border-color:#dee2e6;
+    } 
+    
+    
+    </style>
+{% endblock %}
 {% block content %}
 
-<style>
-
-.select2-dropdown.select2-dropdown--below{
-    border-color:#dee2e6;
-} 
-
-
-</style>
 <div class="d-flex align-items-center flex-column">
     <p class="text-center">
         Para cada ativo, confirme o ticker, a quantidade de ações e a porcentagem alvo. </br>
@@ -23,7 +28,7 @@
             </table>
             <div class="input-group-sm">
                 <table class="table table-borderless table-sm">
-                    <thead>
+                    <thead align="center">
                         {% for form in walletFormSet %}
                             {% if forloop.first %}
                                 {% for field in form %}
