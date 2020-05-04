@@ -9,9 +9,19 @@
         <link rel="shortcut icon" href="{%  static 'favicon/favicon.png' %}">
         {% block style %}
         {% endblock %}
+        <style>
+            .card{
+                margin-top:10vmin;
+                margin-bottom:10vmin;
+                max-width: 120vmin!important;
+                width: 95%!important;
+                min-width: 70vmin!important;
+            }
+        </style>
+
    </head>
     <body class="bg-primary">
-        	<div class="d-flex justify-content-center h-70 mt-4">
+        	<div align="center">
 	        	<div class="card bg-white border-dark rounded-4 shadow-lg" style="min-width:150vmin;">
                     <div class="card-header text-center border-dark rounded-4">
                         <h1 class="card-title mt-4">
