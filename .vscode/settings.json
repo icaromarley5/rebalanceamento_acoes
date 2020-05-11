@@ -1,4 +1,0 @@
-{
-    "python.pythonPath": "rebEnv\\Scripts\\python.exe",
-    "python.envFile": "${workspaceFolder}/dev.env",
-}
