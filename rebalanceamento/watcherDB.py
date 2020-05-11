@@ -29,7 +29,8 @@ def addStock(ticker, today):
                 price=info['Preço'],
                 vpa=info['VPA'],
                 pvp = info['PVP'],
-                day=today).save()
+                day=today
+            ).save()
 
 def watcherFillDB():
     while True:
@@ -46,11 +47,18 @@ def watcherFillDB():
                 time.sleep(.1)
             for stock in Stock.objects.filter(day__lt=today):
                 stock.delete()
-            logger.info(f'({timezone.now()}) WatcherDB: Update completed')
+            logger.info(
+                f'({timezone.now()}) WatcherDB: Update completed'
+            )
         
         toSleep = (25 - hour) * 60 * 60
-        logger.info(f'({timezone.now()}) WatcherDB: Hours to sleep: {toSleep/3600}',)
+        logger.info(
+            f'({timezone.now()}) WatcherDB: Hours to sleep: {toSleep/3600}'
+        )
         time.sleep(toSleep)
 
 if settings.SERVER:
-    threading.Thread(target=watcherFillDB,daemon=True).start()
+    threading.Thread(
+        target=watcherFillDB, 
+        daemon=True
+    ).start()

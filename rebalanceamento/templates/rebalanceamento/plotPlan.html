@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="text-center">
-  Ações recomendadas:<br><br>
+  Ações recomendadas:
   <div class="card border-grey">
       <table class="table table-sm table-hover table-borderless">
         <thead>
@@ -37,9 +37,22 @@
     {{ factorFig | safe }}
     {{ VPAFig | safe }}
     </div>
+
+    <form action="{% url 'redoWallet' %}" method="post">
+      {% csrf_token %}
+      {{walletFormSet.management_form}}
+      {% for form in walletFormSet %}
+              {% for field in form %}
+                  {{ field.as_hidden  }}
+              {% endfor %}
+      {% endfor %}
+      {% for field in capitalForm %}
+          {{field.as_hidden}}
+      {% endfor %}
+      <input class="btn btn-primary" type="submit" value="Refazer">
+    </form>
   </div>
 {% endblock %}
-
 
 {% block extraScripts %}
 {% endblock %}

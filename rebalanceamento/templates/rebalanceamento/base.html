@@ -23,12 +23,16 @@
     <body class="bg-primary">
         	<div align="center">
 	        	<div class="card bg-white border-dark rounded-4 shadow-lg" style="min-width:150vmin;">
-                    <div class="card-header text-center border-dark rounded-4">
+                    
+                    <div class="card-header text-center border-dark rounded-4 p-0">
+                        <a href="{% url 'home' %}" class="btn btn-light w-100 p-2 pb-4">
                         <h1 class="card-title mt-4">
                             Rebalanceamento de carteira
                         </h1>
                         Planejamento de aporte em carteira de ações "Buy and Hold"
+                        </a>
                     </div>
+                    
                     <div class="card-body">
                             {% block content %}
                             {% endblock %}
@@ -42,8 +46,7 @@
                 </div>
             </div>
     <script src="https://code.jquery.com/jquery-3.5.0.js" integrity="sha256-r/AaFHrszJtwpe+tHyNi/XCfMxYpbsRg2Uqn0x3s2zc=" crossorigin="anonymous"></script> 
-    <script src="https://unpkg.com/@popperjs/core@2"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js" integrity="sha384-6khuMg9gaYr5AxOqhkVIODVIvm9ynTT5J4V1cfthmT+emCG6yVmEZsRHdxlotUnm" crossorigin="anonymous"></script>
     {% block extraScripts %}
     {% endblock %}
     </body>

@@ -7,7 +7,8 @@ def computePlan(planDf,capital):
     """
     Rebalacing and investing
     Does rebalancing using a greedy approach
-    That minimizes the distance between the planned and actual percentage
+    That minimizes the distance 
+        between the planned and actual %
     """
     df = planDf.copy()
 
@@ -16,29 +17,33 @@ def computePlan(planDf,capital):
     nonAllocatedCapital = capital
     
     df['Valor'] = df['Preço'] * df['Quantidade']
-    df['PorcentagemAtual'] = df['Valor'] * 100 / df['Valor'].sum()
-    df['distance'] = df['PorcentagemAlvo'] - df['PorcentagemAtual']
+    df['PorcentagemAtual'] = \
+        df['Valor'] * 100 / df['Valor'].sum()
+    df['distance'] = \
+        df['PorcentagemAlvo'] - df['PorcentagemAtual']
     
-    df.sort_values(['distance','PVP'], 
-                   ascending=[False, True], 
-                   inplace=True)
+    df.sort_values(
+        ['distance','PVP'], 
+        ascending=[False, True], 
+        inplace=True
+    )
     
     for _,row in df.iterrows():
         targetValue = \
-            round((
-                df['Valor'].sum() + capital) 
-                * row['PorcentagemAlvo'] / 100,
-                    2)
+            (df['Valor'].sum() + capital) \
+            * row['PorcentagemAlvo'] / 100
+        targetValue = \
+            round(targetValue, 2)
 
         if row['Valor'] < targetValue:   
             valueToAdd = targetValue - row['Valor']
             quant = valueToAdd // row['Preço'] 
             if row['Preço'] > nonAllocatedCapital \
-                    or nonAllocatedCapital < valueToAdd:
-                # rebalancing not possible
-                # buy as much as possible
-                waitFor = row['Ticker'] 
-                quant = nonAllocatedCapital // row['Preço']        
+                or nonAllocatedCapital < valueToAdd:
+                    # rebalancing not possible
+                    # buy as much as possible
+                    waitFor = row['Ticker'] 
+                    quant = nonAllocatedCapital // row['Preço']        
             nonAllocatedCapital -= row['Preço'] * quant
             df.loc[row.name,'QuantidadeParaComprar'] += quant
         if waitFor:          
@@ -47,23 +52,40 @@ def computePlan(planDf,capital):
         waitForAux = None
         # rebalancing done without problems
         # invest the remaining capital
-        df['ValorPlanejado'] = (df['Quantidade'] + df['QuantidadeParaComprar'])\
-            * df['Preço']\
+        
+        totalQuant = df['Quantidade'] + df['QuantidadeParaComprar']
+        totalValue = totalQuant * df['Preço']
+        df['ValorPlanejado'] = \
+            totalValue \
             + df['PorcentagemAlvo'] * nonAllocatedCapital
-        df['PorcentagemPlanejada'] = df['ValorPlanejado'] * 100 \
+        df['PorcentagemPlanejada'] = \
+            df['ValorPlanejado'] * 100 \
             / df['ValorPlanejado'].sum()
-        df['distancePlanned'] = df['PorcentagemAlvo'] - df['PorcentagemPlanejada']
-        df.sort_values(['distancePlanned', 'PVP'],
-                       ascending=[False, True], inplace=True)
+        df['distancePlanned'] = \
+            df['PorcentagemAlvo'] - df['PorcentagemPlanejada']
+        df.sort_values(
+            ['distancePlanned', 'PVP'],
+            ascending=[False, True], 
+            inplace=True
+        )
         
         for _,row in df.iterrows():
-            distanceNow = abs(row['PorcentagemAlvo'] - row['PorcentagemPlanejada'])
+            distanceNow = abs(
+                row['PorcentagemAlvo'] \
+                - row['PorcentagemPlanejada']
+            )
             
             quant = 0
             while True:
                 quant += 1
-                percent = (row['ValorPlanejado'] + quant * row['Preço']) * 100\
-                    /df['ValorPlanejado'].sum()
+
+
+
+
+
+                totalValue = row['ValorPlanejado'] + quant * row['Preço']
+                percent = totalValue * 100 \
+                    / df['ValorPlanejado'].sum()
                 distanceBuyMore = abs(row['PorcentagemAlvo'] - percent)
                 if distanceBuyMore <= distanceNow:
                     if row['Preço'] * quant <= nonAllocatedCapital:
@@ -85,12 +107,14 @@ def computePlan(planDf,capital):
             if waitForAux:
                 break
     
-    df['ValorPlanejado'] = (
-        df['Quantidade'] + df['QuantidadeParaComprar']) \
+    df['ValorPlanejado'] = \
+        (df['Quantidade'] + df['QuantidadeParaComprar']) \
         * df['Preço']
-    df['PorcentagemPlanejada'] = df['ValorPlanejado'] * 100 \
+    df['PorcentagemPlanejada'] = \
+        df['ValorPlanejado'] * 100 \
         / df['ValorPlanejado'].sum()
-    df['distancePlanned'] = df['PorcentagemAlvo'] \
+    df['distancePlanned'] = \
+        df['PorcentagemAlvo'] \
         - df['PorcentagemPlanejada']
 
     if nonAllocatedCapital != capital:

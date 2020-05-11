@@ -15,14 +15,15 @@ headers = {
 
 def getAllTickers():
     tickerList = []
-    
     try:
         url = 'https://www.fundamentus.com.br/detalhes.php'
         r = requests.get(url, headers=headers)
         soup = BeautifulSoup(r.text)
         
         tbody = soup.find('tbody')
-        tickerList = [a.text.strip() for a in tbody.findAll('a')]
+        tickerList = [
+            a.text.strip() for a in tbody.findAll('a')
+        ]
     except Exception as e:
         pass
     return tickerList
@@ -38,22 +39,25 @@ def findTickerInfo(ticker):
         r = requests.get(url, headers=headers)
         soup = BeautifulSoup(r.text)
         
-        tickerInfoAux['Preço'] = \
-            float(soup.find(
-                'span',
-                text='Cotação').find_next('td').text.replace(',','.'))
-        tickerInfoAux['VPA'] = \
-            float(soup.find(
-                'span',
-                text='VPA').find_next('td').text.replace(',','.'))
-        tickerInfoAux['PVP'] = \
-            float(soup.find(
-                'span',
-                text='P/VP').find_next('td').text.replace(',','.'))
-        tickerInfoAux['Nome'] = \
-            soup.find(
-                'span',
-                text='Empresa').find_next('td').text.strip()
+        priceInfo = soup.find(
+            'span',
+            text='Cotação'
+        ).find_next('td').text.replace(',','.')
+        tickerInfoAux['Preço'] = float(priceInfo)
+        vpaInfo = soup.find(
+            'span',
+            text='VPA'
+        ).find_next('td').text.replace(',','.')
+        tickerInfoAux['VPA'] = float(vpaInfo)
+        pvpInfo = soup.find(
+            'span',
+            text='P/VP'
+        ).find_next('td').text.replace(',','.')
+        tickerInfoAux['PVP'] = float(pvpInfo)
+        tickerInfoAux['Nome'] = soup.find(
+            'span',
+            text='Empresa'
+        ).find_next('td').text.strip()
         
         tickerInfo = tickerInfoAux
     except Exception as e:

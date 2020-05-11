@@ -31,40 +31,66 @@ class PlannerTestCase(TestCase):
             'PorcentagemAlvo': [25, 75],
             'Preço': [1, 1],
             'Quantidade': [25, 25],
-            }
+            'PVP': [1, 1],
+        }
         capital = 50
         
-        plan, nonAllocatedCapital = planner.computePlan(
+        plan, nonAllocatedCapital, waitFor = planner.computePlan(
             pd.DataFrame(data),
-            capital)
+            capital
+        )
         
         plan.set_index('Ticker', inplace=True)
-        self.assertEqual(50, plan.loc[
+        planLoc = plan.loc[
             'A2',
-            'QuantidadeParaComprar'])
+            'QuantidadeParaComprar'
+        ]
+        self.assertEqual(50, planLoc)
         self.assertEqual(50, plan['distance'].abs().sum())
-        self.assertEqual(0, 
-            plan['distancePlanned'].abs().sum())
+        self.assertEqual(
+            0, plan['distancePlanned'].abs().sum()
+        )
         self.assertEqual(0, nonAllocatedCapital)
-    
+
+    def test_computePlanWaitFor(self):
+        data = {
+            'Ticker': ['A', 'A2'],
+            'PorcentagemAlvo': [50, 50],
+            'Preço': [1, 1100],
+            'Quantidade': [1, 0],
+            'PVP': [1, 1],
+        }
+        capital = 50
+        
+        plan, nonAllocatedCapital, waitFor = planner.computePlan(
+            pd.DataFrame(data),
+            capital
+        )
+
+        self.assertEqual(waitFor, 'A2')
+        self.assertEqual(capital, nonAllocatedCapital)
+
     def test_computePlanNoAllocation(self):
         data = {
             'Ticker': ['A', 'A2', 'A3'],
             'PorcentagemAlvo': [33, 33, 33],
             'Preço': [1, 1, 50],
             'Quantidade': [15, 15, 0],
-            }
+            'PVP': [1, 1, 1],
+        }
         capital = 25
         
-        plan, nonAllocatedCapital = planner.computePlan(
+        plan, nonAllocatedCapital, waitFor = planner.computePlan(
             pd.DataFrame(data),
-            capital)
+            capital
+        )
         
         plan.set_index('Ticker', inplace=True)
         self.assertEqual(capital, nonAllocatedCapital)
         self.assertEqual(
             plan['distancePlanned'].abs().sum(),
-            plan['distance'].abs().sum())
+            plan['distance'].abs().sum()
+        )
     
     def test_computePlanInvest(self):
         data = {
@@ -72,20 +98,23 @@ class PlannerTestCase(TestCase):
             'PorcentagemAlvo': [33, 33, 33],
             'Preço': [15, 23, 50],
             'Quantidade': [15, 15, 0],
-            }
+            'PVP': [1, 1, 1],
+        }
         capital = 2500
         
-        plan, nonAllocatedCapital = planner.computePlan(
-            pd.DataFrame(data),capital)
+        plan, nonAllocatedCapital, waitFor = planner.computePlan(
+            pd.DataFrame(data),capital
+        )
         
         plan.set_index('Ticker', inplace=True)
         self.assertTrue(nonAllocatedCapital >= 0)
         self.assertTrue(
             plan['distancePlanned'].abs().sum()
-            <= plan['distance'].abs().sum())
-        totalCapital = nonAllocatedCapital \
-            + (plan['QuantidadeParaComprar'] \
-               * plan['Preço']).sum()
+            <= plan['distance'].abs().sum()
+        )
+        allocatedCapitalSeries = plan['QuantidadeParaComprar'] * plan['Preço']
+        allocatedCapital = allocatedCapitalSeries.sum()
+        totalCapital = nonAllocatedCapital + allocatedCapital
         self.assertEqual(totalCapital, capital)
 
 class TickerDataTestCase(TestCase):    
@@ -95,8 +124,9 @@ class TickerDataTestCase(TestCase):
         ticker = tickerData.getAValidTickerCode()
         tickerInfo = tickerData.findTickerInfo(ticker)
 
-        self.assertTrue(set(['Ticker','VPA','Preço','Nome']) == set(tickerInfo.keys()))
+        self.assertTrue(set(['Ticker','VPA','PVP','Preço','Nome']) == set(tickerInfo.keys()))
         self.assertTrue(type(tickerInfo['Preço']) == float)
+        self.assertTrue(type(tickerInfo['PVP']) == float)
         self.assertTrue(type(tickerInfo['VPA']) == float)
         self.assertTrue(tickerInfo['Nome'])
 
@@ -107,17 +137,21 @@ class TickerDataTestCase(TestCase):
 class FormTestCase(TransactionTestCase):
     def setUp(self):
         Stock.objects.create(
-            ticker='TEST1',
+            ticker='TEST3',
             name='Test SA',
             price=1.1,
             vpa=1.1,
-            day=timezone.now().date())
+            pvp=1.1,
+            day=timezone.now().date()
+        )
         Stock.objects.create(
-            ticker='TEST2',
+            ticker='TEST4',
             name='Test2 SA',
             price=1.1,
             vpa=1.1,
-            day=timezone.now().date())
+            pvp=1.1,
+            day=timezone.now().date()
+        )
 
     def test_WalletDataFormTypeSuccess(self):
         self.assertTrue(submitFile('valid.csv'))
@@ -142,18 +176,20 @@ class FormTestCase(TransactionTestCase):
 
     def test_createWalletPlanningForm(self):
         walletForm = forms.createWalletPlanningForm(
-            pd.DataFrame({'Ticker':['A','B'],'Quantidade':[0,0]})
+            pd.DataFrame({'Ticker':['A','B'], 'Quantidade':[0, 0]})
         )
 
         fieldList = [
             'ticker',
-            'quantity','percent']
+            'quantity','percent'
+        ]
         formFieldList = []
         for form in walletForm.forms:
             formFieldList+= list(form.base_fields.keys())
         
         self.assertTrue(
-            set(fieldList) == set(formFieldList))
+            set(fieldList) == set(formFieldList)
+        )
     
     def test_createWalletPlanningFormSuccess(self):
         walletForm = forms.createWalletPlanningForm()
@@ -287,49 +323,71 @@ class ViewTestCase(TransactionTestCase):
         cls.client = Client()
     
     def setUp(self):
-        Stock(
-            ticker='TEST1',
+        Stock.objects.create(
+            ticker='TEST3',
             name='Test SA',
             price=1.1,
             vpa=1.1,
-            day=timezone.now().date()).save()
-        Stock(
-            ticker='TEST2',
+            pvp=1.1,
+            day=timezone.now().date()
+        )
+        Stock.objects.create(
+            ticker='TEST4',
             name='Test2 SA',
             price=1.1,
             vpa=1.1,
-            day=timezone.now().date()).save()
-    
-    def test_viewHomeGET(self):
-        response = self.client.get(
-            reverse('home'))
-        self.assertTrue(
-            'rebalanceamento/home.html' in 
-            [template.name 
-             for template in response.templates])
+            pvp=1.1,
+            day=timezone.now().date()
+        )
 
-    def test_viewHomePOSTSuccess(self):
-        response = self.client.post(
-            reverse('home'), {'file':getFileData('valid.csv')})
+    def test_homeGET(self):
+        response = self.client.get(
+            reverse('home')
+        )
+        templateList = [
+            template.name \
+            for template in response.templates
+        ]
         self.assertTrue(
-            'rebalanceamento/confirmWallet.html' in 
-            [template.name 
-             for template in response.templates])
+            'rebalanceamento/home.html' in templateList
+        )
+
+    def test_homePOSTSuccess(self):
+        data = {'file':getFileData('valid.csv')}
+        response = self.client.post(
+            reverse('home'), 
+            data
+        )
+        templateList = [
+            template.name \
+            for template in response.templates
+        ]
+        self.assertTrue(
+            'rebalanceamento/confirmWallet.html' in templateList
+        )
 
     def test_viewHomePOSTFailure(self):
+        data = {'file':getFileData('invalidType.txt')}
         response = self.client.post(
-            reverse('home'), {'file':getFileData('invalidType.txt')})
+            reverse('home'), data
+        )
+        templateList = [
+            template.name \
+             for template in response.templates
+        ]
         self.assertTrue(
-            'rebalanceamento/confirmWallet.html' in 
-            [template.name 
-             for template in response.templates])
+            'rebalanceamento/confirmWallet.html' in templateList
+        )
 
     def test_confirmWalletGET(self):
         response = self.client.get(reverse('confirmWallet'))
+        templateList = [
+            template.name \
+             for template in response.templates
+        ]
         self.assertFalse(
-            'rebalanceamento/confirmWallet.html' in 
-            [template.name 
-             for template in response.templates])
+            'rebalanceamento/confirmWallet.html' in templateList
+        )
 
     def test_confirmWalletPOSTSuccess(self):
         data = {
@@ -343,10 +401,13 @@ class ViewTestCase(TransactionTestCase):
             'form-0-percent': '100',
         } 
         response = self.client.post(reverse('confirmWallet'), data)
+        templateList = [
+            template.name \
+            for template in response.templates
+        ]
         self.assertTrue(
-            'rebalanceamento/plotPlan.html' in 
-            [template.name 
-             for template in response.templates])
+            'rebalanceamento/plotPlan.html' in templateList
+        )
 
     def test_confirmWalletPOSTFormFailure(self):
         data = {
@@ -360,8 +421,104 @@ class ViewTestCase(TransactionTestCase):
             'form-0-percent': '100',
         }
         response = self.client.post(reverse('confirmWallet'), data)
-        
+        templateList = [
+            template.name \
+            for template in response.templates
+        ]
         self.assertFalse(
-            'rebalanceamento/plotPlan.html' in 
-            [template.name 
-             for template in response.templates])
+            'rebalanceamento/plotPlan.html' in templateList
+        )
+
+    def test_confirmWalletPOSTFormInvalidForm(self):
+        data = {
+            'capital':100,
+            'form-TOTAL_FORMS': '1',
+            'form-0-ticker': Stock.objects.first(),
+            'form-0-quantity': '2', 
+            'form-0-percent': '100',
+        } 
+        response = self.client.post(
+            reverse('confirmWallet'), 
+            data)
+        templateList = [
+            template.name \
+            for template in response.templates
+        ]
+        self.assertFalse(
+            'rebalanceamento/plotPlan.html' in templateList
+        )
+
+    def test_redoWalletGET(self):
+        response = self.client.get(
+            reverse('redoWallet'))
+        templateList = [
+            template.name \
+            for template in response.templates
+        ]
+        self.assertFalse(
+            'rebalanceamento/confirmWallet.html' in templateList
+        )
+
+    def test_redoWalletPOSTSuccess(self):
+        data = {
+            'capital':100,
+            'form-TOTAL_FORMS': '1',
+            'form-INITIAL_FORMS': '1',
+            'form-MIN_NUM_FORMS': '0',
+            'form-MAX_NUM_FORMS': '1000',
+            'form-0-ticker': Stock.objects.first(),
+            'form-0-quantity': '2', 
+            'form-0-percent': '100',
+        } 
+        response = self.client.post(
+            reverse('redoWallet'), data
+        )
+        templateList = [
+            template.name \
+            for template in response.templates
+        ]
+        self.assertTrue(
+            'rebalanceamento/confirmWallet.html' in templateList
+        )
+
+    def test_redoWalletPOSTFailure(self):
+        data = {
+            'capital':100,
+            'form-TOTAL_FORMS': '1',
+            'form-INITIAL_FORMS': '1',
+            'form-MIN_NUM_FORMS': '0',
+            'form-MAX_NUM_FORMS': '1000',
+            'form-0-ticker': Stock.objects.first(),
+            'form-0-quantity': '2', 
+            'form-0-percent': '0',
+        } 
+        response = self.client.post(
+            reverse('redoWallet'), 
+            data
+        )
+        templateList = [
+            template.name \
+            for template in response.templates
+        ]
+        self.assertFalse(
+            'rebalanceamento/confirmWallet.html' in templateList
+        )
+
+    def test_redoWalletPOSTInvalidForm(self):
+        data = {
+            'capital':100,
+            'form-TOTAL_FORMS': '1',
+            'form-0-ticker': Stock.objects.first(),
+            'form-0-quantity': '2', 
+            'form-0-percent': '100',
+        } 
+        response = self.client.post(
+            reverse('redoWallet'), data
+        )
+        templateList = [
+            template.name \
+            for template in response.templates
+        ]
+        self.assertFalse(
+            'rebalanceamento/confirmWallet.html' in templateList
+        )

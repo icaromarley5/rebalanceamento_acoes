@@ -20,60 +20,109 @@ import pandas as pd
 def home(request):
     if request.method == 'POST':
         form = WalletDataForm(request.POST, request.FILES)
-        if form.is_valid():
+        if form and form.is_valid():
             data = form.cleaned_data['file']
         else:
-            data = pd.DataFrame({
-                'Ticker':[''],
-                'Quantidade':[0]})
+            dataDict = {
+                'Ticker': [''],
+                'Quantidade': [0]
+            }
+            data = pd.DataFrame(dataDict)
         form = createWalletPlanningForm(data)
-        return render(request, 
-                          'rebalanceamento/confirmWallet.html',{
-                              'walletFormSet': form,
-                              'capitalForm':CapitalForm()})
+        renderData = {
+            'walletFormSet': form,
+            'capitalForm':CapitalForm()
+        }
+        return render(
+            request, 
+            'rebalanceamento/confirmWallet.html', 
+            renderData
+        )
+    form = WalletDataForm()
+    renderData = {'form':form}
+    return render(
+        request, 
+        'rebalanceamento/home.html', 
+        renderData
+    )
 
-    else:
-        form = WalletDataForm()
-    return render(request, 
-                  'rebalanceamento/home.html',{
-                      'form':form})
+def redirect404(request, *args, **kwargs):
+    return redirect('home')
 
 def confirmWallet(request):    
-    if request.method == 'POST':        
+    if request.method == 'POST':       
         capitalForm = CapitalForm(request.POST)
         WalletForm = createWalletPlanningForm()
         walletForm = WalletForm(request.POST)
-        if capitalForm.is_valid() and walletForm.is_valid():
+        try:
+            valid = capitalForm.is_valid() and walletForm.is_valid()
+        except:
+            valid = False
+            capitalForm = CapitalForm()
+            WalletForm = createWalletPlanningForm()
+            walletForm = WalletForm()
+        if valid:
             df = pd.DataFrame(walletForm.cleaned_data)
-            df.columns = ['Ticker','Quantidade','PorcentagemAlvo']
+            df.columns = ['Ticker', 'Quantidade', 'PorcentagemAlvo']
             df['VPA'] = df['Ticker'].apply(lambda x:x.vpa)
             df['Preço'] = df['Ticker'].apply(lambda x:x.price)
             df['PVP'] = df['Ticker'].apply(lambda x:x.pvp)
             df['Ticker'] = df['Ticker'].apply(lambda x:x.ticker)
             capital = capitalForm.cleaned_data['capital']
             plan, nonAllocatedCapital, waitFor = planner.computePlan(
-                pd.DataFrame(df), capital)
+                pd.DataFrame(df), capital
+            )
             dataToPlot = {
-                    'plan': plan,
-                    'allocatedCapital': capital - nonAllocatedCapital,
-                    'nonAllocatedCapital': nonAllocatedCapital, }
+                'plan': plan,
+                'allocatedCapital': capital - nonAllocatedCapital,
+                'nonAllocatedCapital': nonAllocatedCapital
+            }
             data = {'waitFor':waitFor}
             data.update(dataPlots.createPlots(dataToPlot))
+            data['capitalForm'] = capitalForm
+            data['walletFormSet'] = walletForm
             return render(
                 request, 
                 'rebalanceamento/plotPlan.html',
-                data) 
+                data
+            ) 
+        dataRender = {
+            'walletFormSet': walletForm, 
+            'capitalForm': capitalForm
+        }
         return render(
             request, 
-            'rebalanceamento/confirmWallet.html',
-            {'walletFormSet': walletForm,'capitalForm':capitalForm})
+            'rebalanceamento/confirmWallet.html', 
+            dataRender
+        )
     return redirect('home') 
 
+def redoWallet(request):
+    if request.method == 'POST':
+        capitalForm = CapitalForm(request.POST)
+        WalletForm = createWalletPlanningForm()
+        walletForm = WalletForm(request.POST)
+        try:
+            valid = capitalForm.is_valid() and walletForm.is_valid()
+        except:
+            valid = False
+        if valid:
+            dataRender = {
+                'walletFormSet': walletForm,
+                'capitalForm': capitalForm
+            }
+            return render(
+                request, 
+                'rebalanceamento/confirmWallet.html',
+                dataRender
+            )
+    return redirect('home')
+        
 class StockAutocomplete(autocomplete.Select2QuerySetView):
     def get_queryset(self):
         qs = Stock.objects.all()
-
         if self.q:
             qs = qs.filter(
-                Q(name__istartswith=self.q)|Q(ticker__istartswith=self.q))
+                Q(name__istartswith=self.q) \
+                | Q(ticker__istartswith=self.q))
         return qs
