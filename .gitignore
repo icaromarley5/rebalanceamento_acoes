@@ -1,3 +1,4 @@
-rebalanceamento_acoes/settings.py
 rebalanceamento_acoes/__pycache__
 rebalanceamento/__pycache__
+rebEnv/
+.vscode/
