@@ -6,6 +6,7 @@ from django.core.validators import FileExtensionValidator
 
 from dal import autocomplete
 
+import math 
 import pandas as pd 
 import numpy as np
 
@@ -57,6 +58,21 @@ class WalletDataForm(forms.Form):
             )
         return df
 
+class CapitalForm(forms.Form):
+    capital = forms.FloatField(
+        label='Aporte', 
+        required=True,
+        min_value=0.01,
+        widget=forms.NumberInput(
+            attrs={
+                'class':'form-control border border-grey'
+            }
+        )
+    )
+    def clean_capital(self):
+        capital = self.cleaned_data['capital']
+        return round(capital, 2)
+
 class WalletPlanningForm(forms.Form):
     ticker = forms.ModelChoiceField(
         queryset=Stock.objects.all(),
@@ -72,6 +88,7 @@ class WalletPlanningForm(forms.Form):
     quantity = forms.FloatField(
         required=True, label='Quantidade',
         min_value=0,
+        initial=0,
         widget=forms.NumberInput(
             attrs={
                 'class':'form-control form-control-sm border border-grey',
@@ -79,11 +96,10 @@ class WalletPlanningForm(forms.Form):
             }
         )
     )
-
     percent = forms.FloatField(
         label='Porcentagem',
-        required=True, 
-        min_value=0,
+        required=False, 
+        min_value=0.00,
         widget=forms.NumberInput(
             attrs={
                 'class':'form-control form-control-sm border border-grey',
@@ -104,34 +120,31 @@ class WalletPlanningForm(forms.Form):
             )
         return ticker
 
-class CapitalForm(forms.Form):
-    capital = forms.FloatField(
-        label='Aporte', 
-        required=True,
-        min_value=0.01,
-        widget=forms.NumberInput(
-            attrs={
-                'class':'form-control border border-grey'
-            }
-        )
-    )
-    def clean_capital(self):
-        capital = self.cleaned_data['capital']
-        return round(capital, 2)
-
 class WalletPlanningFormSet(BaseFormSet):
     def clean(self):
         if any(self.errors):
              return 
+        notFilled = []
         percentTotal = 0
         for form in self.forms:
-            percentTotal += form.cleaned_data.get('percent')
-        if round(percentTotal,2) != 100:
+            percentAux = form.cleaned_data.get('percent')
+            if percentAux:
+                percentTotal += percentAux
+            else: # mark for filling
+                notFilled.append(form.cleaned_data)
+        
+        if round(percentTotal, 2) > 100:
             self.forms[0].add_error(
                 'percent',
                 f'Porcentagens não somam 100%. Soma calculada : {percentTotal:.2f}%'
             )
-
+        else:
+            if notFilled:
+                percentLeft = 100 - percentTotal
+                percentLeft = math.floor(100 * percentLeft / len(notFilled))/100.0 
+                for form in notFilled:
+                    form['percent'] = percentLeft
+    
 def createWalletPlanningForm(df=None):
     WalletFormSet = formset_factory(
         WalletPlanningForm,

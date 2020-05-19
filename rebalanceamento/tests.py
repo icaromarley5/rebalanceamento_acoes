@@ -227,24 +227,6 @@ class FormTestCase(TransactionTestCase):
         form = forms.CapitalForm(data)
         self.assertFalse(form.is_valid())
 
-    def test_createWalletPlanningFormFailurePercentTotal(self):
-        walletForm = forms.createWalletPlanningForm()
-        data = {
-            'capital':100,
-            'form-TOTAL_FORMS': '2',
-            'form-INITIAL_FORMS': '2',
-            'form-MIN_NUM_FORMS': '0',
-            'form-MAX_NUM_FORMS': '1000',
-            'form-0-ticker': Stock.objects.first(),
-            'form-0-quantity': '2', 
-            'form-0-percent': '50',
-            'form-1-ticker': Stock.objects.last(),
-            'form-1-quantity': '2', 
-            'form-1-percent': '51',
-        } 
-        form = walletForm(data)
-        self.assertFalse(form.is_valid())
-
     def test_createWalletPlanningFormFailureManagement(self):
         walletForm = forms.createWalletPlanningForm()
         data = {
@@ -280,7 +262,25 @@ class FormTestCase(TransactionTestCase):
         form = walletForm(data)
         self.assertFalse(form.is_valid())
 
-    def test_createWalletPlanningFormFailurePercent(self):
+    def test_createWalletPlanningFormFailurePercentAbove(self):
+        walletForm = forms.createWalletPlanningForm()
+        data = {
+            'capital':100,
+            'form-TOTAL_FORMS': '2',
+            'form-INITIAL_FORMS': '2',
+            'form-MIN_NUM_FORMS': '0',
+            'form-MAX_NUM_FORMS': '1000',
+            'form-0-ticker': Stock.objects.first(),
+            'form-0-quantity': '2', 
+            'form-0-percent': '50',
+            'form-1-ticker': Stock.objects.last(),
+            'form-1-quantity': '2', 
+            'form-1-percent': '51',
+        } 
+        form = walletForm(data)
+        self.assertFalse(form.is_valid())
+
+    def test_createWalletPlanningFormFailurePercentBelow(self):
         walletForm = forms.createWalletPlanningForm()
         data = {
             'capital':100,
@@ -297,6 +297,41 @@ class FormTestCase(TransactionTestCase):
         } 
         form = walletForm(data)
         self.assertFalse(form.is_valid())
+
+    def test_createWalletPlanningFormFailurePercentBelowNotFilled(self):
+        walletForm = forms.createWalletPlanningForm()
+        data = {
+            'capital':100,
+            'form-TOTAL_FORMS': '2',
+            'form-INITIAL_FORMS': '2',
+            'form-MIN_NUM_FORMS': '0',
+            'form-MAX_NUM_FORMS': '1000',
+            'form-0-ticker': Stock.objects.first(),
+            'form-0-quantity': '2', 
+            'form-1-ticker': Stock.objects.last(),
+            'form-1-quantity': '2', 
+            'form-1-percent': '-50',
+        } 
+        form = walletForm(data)
+        self.assertFalse(form.is_valid())
+
+    def test_createWalletPlanningFormFailurePercentFill(self):
+        walletForm = forms.createWalletPlanningForm()
+        data = {
+            'capital':100,
+            'form-TOTAL_FORMS': '2',
+            'form-INITIAL_FORMS': '2',
+            'form-MIN_NUM_FORMS': '0',
+            'form-MAX_NUM_FORMS': '1000',
+            'form-0-ticker': Stock.objects.first(),
+            'form-0-quantity': '2', 
+            'form-0-percent': '50',
+            'form-1-ticker': Stock.objects.last(),
+            'form-1-quantity': '2', 
+        } 
+        form = walletForm(data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data[1]['percent'], 50)
 
     def test_createWalletPlanningFormPOSTFailureTicker(self):
         walletForm = forms.createWalletPlanningForm()
@@ -490,7 +525,7 @@ class ViewTestCase(TransactionTestCase):
             'form-MAX_NUM_FORMS': '1000',
             'form-0-ticker': Stock.objects.first(),
             'form-0-quantity': '2', 
-            'form-0-percent': '0',
+            'form-0-percent': '102',
         } 
         response = self.client.post(
             reverse('redoWallet'), 
