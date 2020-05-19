@@ -1,37 +1,17 @@
 {% extends 'rebalanceamento/base.html' %}
 
 {% block content %}
-<style>
-.tooltip.top .tooltip-arrow,.tooltip-inner {
-    color: #fff;
-    background-color: #0074d9;
-}
-.tooltip.bs-tooltip-auto[x-placement^=top] .arrow::before, .tooltip.bs-tooltip-top .arrow::before {
-    border-top-color: #0074d9;
-}
 
-.tooltip.show /* The CSS classes that the tooltip has */ {
-    opacity: 1; 
-}
-</style>
 <div align="center">
-		<p>
-			Para preencher automaticamente, carregue um arquivo "CSV" com sua carteira.
-		</p>
-		<form action="{% url 'home' %}" method="post"enctype="multipart/form-data">
-			{% csrf_token %}
-			<div class="w-25" data-toggle="tooltip" data-html="true" data-placement="top" title="<small>Ele pode ser gerado no CEI/Carteira de ativos. É só copiar o conteúdo da tabela (sem cabeçalho e rodapé) e salvar com a extensão 'CSV'.</small>">
-				{{form.as_p}}
-			</div>
-			<input class="btn btn-primary" type="submit" value="Continuar">
-		</form>	
+	<p>
+		Para preencher automaticamente, carregue um arquivo "CSV" com sua carteira.
+	</p>
+	<form action="{% url 'home' %}" method="post"enctype="multipart/form-data">
+		{% csrf_token %}
+		<div class="w-25" data-toggle="tooltip" data-html="true" data-placement="top" title="<small>Ele pode ser gerado no CEI/Carteira de ativos. É só copiar o conteúdo da tabela (sem cabeçalho e rodapé) e salvar com a extensão 'CSV'.</small>">
+			{{form.as_p}}
+		</div>
+		<input class="btn btn-primary" type="submit" value="Continuar">
+	</form>	
 </div>
-{% endblock %}
-
-{% block extraScripts %}
-    <script>
-        $(function () {
-            $('[data-toggle="tooltip"]').tooltip()
-        })
-    </script>
 {% endblock %}

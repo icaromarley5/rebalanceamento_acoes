@@ -63,6 +63,7 @@ class WalletPlanningForm(forms.Form):
         widget=autocomplete.ModelSelect2(
             url='stock-autocomplete',
             attrs={
+                #'data-language': 'pt',
                 'class':'form-control p-0 m-0 border border-grey',
                 'data-minimum-input-length': 3
             }

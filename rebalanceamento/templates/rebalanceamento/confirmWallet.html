@@ -1,16 +1,7 @@
 {% extends 'rebalanceamento/base.html' %}
 
 {% block style %}
-<style>
-    .select2-container{
-        min-width:25vmin !important;
-    }
-    .select2-dropdown.select2-dropdown--below{
-        border-color:#dee2e6;
-    } 
-    
-    
-    </style>
+
 {% endblock %}
 {% block content %}
 
@@ -19,87 +10,67 @@
         Para cada ativo, confirme o ticker, a quantidade de ações e a porcentagem alvo. </br>
         Por último, digite o valor do aporte:
     </p>
-  
-        <form action="{% url 'confirmWallet' %}" method="post">
-            {% csrf_token %}
-            {{walletFormSet.management_form}}
-            <table id="formset-table-empty" style="display: none">
+    <form action="{% url 'confirmWallet' %}" method="post">
+        {% csrf_token %}
+        {{walletFormSet.management_form}}
+        <table id="formset-table-empty" style="display: none">
+            <tbody>
                 {{walletFormSet.empty_form}}
+                <tr>
+                    <td>
+                        <a class="delete-row btn btn-primary text-light p-0" style="width:2em;">
+                                        X
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="input-group-sm">
+            <table class="table table-borderless table-sm">
+                <thead align="center">
+                    {% for form in walletFormSet %}
+                        {% if forloop.first %}
+                            {% for field in form %}
+                                <th scope="col">{{ field.label_tag }}</th>
+                            {% endfor %}
+                        {% endif %}
+                    {% endfor %}
+                    <th scope="col"></th>
+                </thead>
+                <tbody class="walletForm">
+                    {% for form in walletFormSet %}
+                        <tr class="dynamic-form">
+                            {% for field in form %}
+                                <td>{{ field }}</td>
+                            {% endfor %}
+                            <td>
+                                <a class="delete-row btn btn-primary text-light p-0" style="width:2em;">
+                                    X
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    <tr class="dynamic-form"> </tr>
+                </tbody>
             </table>
-            <div class="input-group-sm">
-                <table class="table table-borderless table-sm">
-                    <thead align="center">
-                        {% for form in walletFormSet %}
-                            {% if forloop.first %}
-                                {% for field in form %}
-                                    <th scope="col">{{ field.label_tag }}</th>
-                                {% endfor %}
-                            {% endif %}
-                        {% endfor %}
-                    </thead>
-                    <tbody class="walletForm">
-                        {% for form in walletFormSet %}
-                            <tr class="dynamic-form">
-                                {% for field in form %}
-                                    <td>{{ field }}</td>
-                                {% endfor %}
-                            </tr>
-                        {% endfor %}
-                        <tr class="dynamic-form"> </tr>
-                    </tbody>
-                </table>
-            </div>
-            {% for form in walletFormSet %}
-                {% for key, errorList in form.errors.items %}
-                    {{errorList}}
-                {% endfor %}
+        </div>
+        {% for form in walletFormSet %}
+            {% for key, errorList in form.errors.items %}
+                {{errorList}}
             {% endfor %}
-            <div class="d-flex justify-content-around w-25">
-                    <a class="add-row btn btn-primary text-light" style="width:3em;">+</a>
-                    <a class="delete-row btn btn-primary text-light" style="width:3em;">-</a>
-            </div>
-            {% for field in capitalForm %}
-                <b>{{field.label_tag}}</b><div class="w-25">{{field}}</div>
-                </br>
-            {% endfor %}
-            <input class="btn btn-primary" type="submit" value="Confirmar">
-        </form>
+        {% endfor %}
+        <div class="d-flex justify-content-around w-25">
+                <a class="add-row btn btn-primary text-light" style="width:3em;">+</a>
+        </div>
+        {% for field in capitalForm %}
+            <b>{{field.label_tag}}</b><div class="w-25">{{field}}</div>
+            </br>
+        {% endfor %}
+        <input class="btn btn-primary" type="submit" value="Confirmar">
+    </form>
 </div>
 {% endblock %}
 
 {% block extraScripts %}
 {{ walletFormSet.media }}
-
-<script>
-    $('.add-row').click(function() {
-        var index = $('#id_form-TOTAL_FORMS').val();
-        var newRow = $('#formset-table-empty').clone(true);
-        newRow.find(':input').each(function() {
-            for (attr of ['name', 'id'])
-                $(this).attr(
-                    attr,
-                    $(this).attr(attr).replace('__prefix__', index)
-                )
-        });
-        var lastRow = $(".dynamic-form:last");
-        lastRow.clone().appendTo('.walletForm');
-        newRow.find('td').appendTo(lastRow);
-        $('#id_form-TOTAL_FORMS').val(
-            parseInt($('#id_form-TOTAL_FORMS').val()) + 1
-        );
-    });
-    function deleteForm(btn) {
-        if ($('.dynamic-form').length > 2){
-            $('.dynamic-form:last').prev().remove();
-            $('#id_form-TOTAL_FORMS').val(
-            parseInt($('#id_form-TOTAL_FORMS').val()) - 1
-            );
-        }
-    }
-    $('.delete-row').click(function() {
-        return deleteForm(this);
-    });
-</script>
- 
-
 {% endblock %}
