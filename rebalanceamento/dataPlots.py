@@ -11,6 +11,14 @@ currentColor = '#104578'
 plannedColor = '#196ebf'
 targetColor = '#309bff'
 
+def to_html(fig):
+    return fig.to_html(
+        full_html=False,
+        include_plotlyjs=False,
+        include_mathjax=False,
+        config={'responsive': True}
+    )
+
 def createPlots(data):
     plan = data['plan']
     nonAllocatedCapital = data['nonAllocatedCapital']
@@ -22,12 +30,16 @@ def createPlots(data):
     columns = ['Ticker', toBuyCol, 'Preço']
     tickerList = plan[plan[toBuyCol] > 0][columns].values
 
-    return {   
-        'allocationFig': plotWalletAllocation(
-            allocatedCapital, nonAllocatedCapital), 
-        'walletFig': plotWallet(plan),
-        'factorFig': plotFactor(plan),
-        'VPAFig': plotVPA(plan),
+    return {  
+        'figList':[
+            plotWalletAllocation(
+                allocatedCapital, nonAllocatedCapital
+            ), 
+            plotFactor(plan),
+            plotWallet(plan),
+            plotVPA(plan),
+
+        ],
         'tickerList': tickerList,
     }
 
@@ -48,10 +60,7 @@ def plotWalletAllocation(
             texttemplate='%{percent}'
         )
         fig.update_layout(separators = ',')
-        return fig.to_html(
-            full_html=False,
-            config={'responsive': True}
-        )
+        return to_html(fig)
 
 def plotFactor(plan):
     #bar plot balancing factor
@@ -83,12 +92,11 @@ def plotFactor(plan):
     fig.update_traces(
         hovertemplate='%{y:.2f}%<extra></extra>',
     )
-    return fig.to_html(full_html=False) 
+    return to_html(fig)
                 
 def plotVPA(plan):
     VPA = (plan['Quantidade'] * plan['VPA']).sum()
-    
-    
+
     totalQuant = \
         plan['Quantidade'] \
         + plan['QuantidadeParaComprar']
@@ -125,7 +133,7 @@ def plotVPA(plan):
     fig.update_traces(
         hovertemplate='R$ %{y:.2f}<extra></extra>',
     )
-    return fig.to_html(full_html=False) 
+    return to_html(fig)
 
 def plotWallet(plan):
     columns = [
@@ -172,4 +180,4 @@ def plotWallet(plan):
     fig.update_traces(
         hovertemplate='%{y:.2f}%<extra></extra>',
     )
-    return fig.to_html(full_html=False) 
+    return to_html(fig)

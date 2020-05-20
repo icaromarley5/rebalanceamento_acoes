@@ -32,10 +32,9 @@
   <br>
   <div class="d-flex align-items-center flex-column">
     <div class="graph" style="width: 100%;">
-    {{ allocationFig | safe }}
-    {{ walletFig | safe }}
-    {{ factorFig | safe }}
-    {{ VPAFig | safe }}
+      {% for fig in figList %}
+        {{ fig | safe }}
+      {% endfor %}
     </div>
 
     <form action="{% url 'redoWallet' %}" method="post">
