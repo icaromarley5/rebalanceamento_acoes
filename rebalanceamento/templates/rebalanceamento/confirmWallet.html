@@ -1,8 +1,5 @@
 {% extends 'rebalanceamento/base.html' %}
 
-{% block style %}
-
-{% endblock %}
 {% block content %}
 
 <div class="d-flex align-items-center flex-column">
@@ -26,14 +23,18 @@
             </tbody>
         </table>
         <div class="input-group-sm">
+            {% if walletFormSet.errors %}
+            <div class="errors border border-danger">
+                Alguns dados inseridos foram considerados inválidos.</br> 
+                Por favor, cheque cada campo.
+            </div>
+            {% endif %}
+
+
             <table class="table table-borderless table-sm">
                 <thead align="center">
-                    {% for form in walletFormSet %}
-                        {% if forloop.first %}
-                            {% for field in form %}
-                                <th scope="col">{{ field.label_tag }}</th>
-                            {% endfor %}
-                        {% endif %}
+                    {% for field in walletFormSet.0 %}
+                        <th scope="col">{{ field.label_tag }}</th>
                     {% endfor %}
                     <th scope="col"></th>
                 </thead>
@@ -41,7 +42,9 @@
                     {% for form in walletFormSet %}
                         <tr class="dynamic-form">
                             {% for field in form %}
-                                <td>{{ field }}</td>
+                                <td data-toggle="tooltip" data-html="true" data-placement="top" title='{{ field.errors.as_text }}'>
+                                    {{ field }}
+                                </td>
                             {% endfor %}
                             <td>
                                 <a class="delete-row btn btn-primary text-light p-0" style="width:2em;">
@@ -54,11 +57,6 @@
                 </tbody>
             </table>
         </div>
-        {% for form in walletFormSet %}
-            {% for key, errorList in form.errors.items %}
-                {{errorList}}
-            {% endfor %}
-        {% endfor %}
         <div class="d-flex justify-content-around w-25">
                 <a class="add-row btn btn-primary text-light" style="width:3em;">+</a>
         </div>

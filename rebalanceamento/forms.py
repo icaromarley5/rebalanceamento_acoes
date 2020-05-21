@@ -74,6 +74,7 @@ class CapitalForm(forms.Form):
         return round(capital, 2)
 
 class WalletPlanningForm(forms.Form):
+    
     ticker = forms.ModelChoiceField(
         queryset=Stock.objects.all(),
         widget=autocomplete.ModelSelect2(

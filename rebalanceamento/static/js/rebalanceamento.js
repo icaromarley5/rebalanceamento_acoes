@@ -1,6 +1,10 @@
+// tooltips 
+
 $(function () {
     $('[data-toggle="tooltip"]').tooltip()
 })
+
+//dynamic form 
 
 function updateForm(form, index, prefix) {
     $(form).find(':input').each(function() {
@@ -119,6 +123,8 @@ $('.add-row').click(function() {
         )
     }
 })
+
+// add css to select2 generated boxes
 
 $(document).ready(
     $('body').on("DOMNodeInserted", function () {

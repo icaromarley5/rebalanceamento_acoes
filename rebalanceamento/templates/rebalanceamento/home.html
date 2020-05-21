@@ -8,9 +8,9 @@
 	</p>
 	<form action="{% url 'home' %}" method="post"enctype="multipart/form-data">
 		{% csrf_token %}
-		<div class="w-25" data-toggle="tooltip" data-html="true" data-placement="top" title="<small>Ele pode ser gerado no CEI/Carteira de ativos. É só copiar o conteúdo da tabela (sem cabeçalho e rodapé) e salvar com a extensão 'CSV'.</small>">
-			{{form.as_p}}
-		</div>
+		<p class="w-25" data-toggle="tooltip" data-html="true" data-placement="top" title="<small>Ele pode ser gerado no CEI/Carteira de ativos. É só copiar o conteúdo da tabela (sem cabeçalho e rodapé) e salvar com a extensão 'CSV'.</small>">
+			{{ form }}
+		</p>
 		<input class="btn btn-primary" type="submit" value="Continuar">
 	</form>	
 </div>

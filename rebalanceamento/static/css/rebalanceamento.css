@@ -2,6 +2,7 @@ body{
     font-family: 'Maven Pro', sans-serif;
 }
 
+/* card */
 .card{
     margin-top:10vmin;
     margin-bottom:10vmin;
@@ -10,6 +11,7 @@ body{
     min-width: 70vmin!important;
 }
 
+/* tooltips */
 .tooltip.top .tooltip-arrow,.tooltip-inner {
     color: #fff;
     background-color: #0074d9;
@@ -22,6 +24,7 @@ body{
     opacity: 1; 
 }
 
+/* forms */
 .select2-dropdown.select2-dropdown--below{
     border-color:#0074d9;
 }
@@ -45,4 +48,8 @@ input[type="number"]{
 
 .select2-container{
     min-width: 25vmin !important;
+}
+
+.errorlist{
+    font-size: smaller;
 }
