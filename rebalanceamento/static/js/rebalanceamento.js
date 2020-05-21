@@ -119,3 +119,12 @@ $('.add-row').click(function() {
         )
     }
 })
+
+$(document).ready(
+    $('body').on("DOMNodeInserted", function () {
+        $(this).find('.select2-search__field').addClass(
+            'form-control border border-primary',
+        )
+        }
+    ) 
+)

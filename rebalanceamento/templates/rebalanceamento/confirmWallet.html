@@ -62,10 +62,12 @@
         <div class="d-flex justify-content-around w-25">
                 <a class="add-row btn btn-primary text-light" style="width:3em;">+</a>
         </div>
+        </br>
         {% for field in capitalForm %}
             <b>{{field.label_tag}}</b><div class="w-25">{{field}}</div>
             </br>
         {% endfor %}
+        </br>
         <input class="btn btn-primary" type="submit" value="Confirmar">
     </form>
 </div>

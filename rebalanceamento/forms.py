@@ -19,7 +19,7 @@ class WalletDataForm(forms.Form):
         label='Arquivo CSV',
         widget=forms.FileInput(
             attrs={
-                'class':'form-control-file border border-grey'
+                'class':'form-control-file border border-primary'
             }
         )
     )
@@ -65,7 +65,7 @@ class CapitalForm(forms.Form):
         min_value=0.01,
         widget=forms.NumberInput(
             attrs={
-                'class':'form-control border border-grey'
+                'class':'form-control border border-primary'
             }
         )
     )
@@ -79,8 +79,7 @@ class WalletPlanningForm(forms.Form):
         widget=autocomplete.ModelSelect2(
             url='stock-autocomplete',
             attrs={
-                #'data-language': 'pt',
-                'class':'form-control p-0 m-0 border border-grey',
+                'class':'form-control p-0 m-0 border border-primary',
                 'data-minimum-input-length': 3
             }
         )
@@ -91,7 +90,7 @@ class WalletPlanningForm(forms.Form):
         initial=0,
         widget=forms.NumberInput(
             attrs={
-                'class':'form-control form-control-sm border border-grey',
+                'class':'form-control form-control-sm border border-primary',
                 'step': '1'
             }
         )
@@ -102,7 +101,7 @@ class WalletPlanningForm(forms.Form):
         min_value=0.00,
         widget=forms.NumberInput(
             attrs={
-                'class':'form-control form-control-sm border border-grey',
+                'class':'form-control form-control-sm border border-primary',
                 'step': '0.01'
             }
         )

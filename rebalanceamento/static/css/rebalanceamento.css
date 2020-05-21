@@ -6,7 +6,7 @@ body{
     margin-top:10vmin;
     margin-bottom:10vmin;
     max-width: 110vmin!important;
-    width: 99%!important;
+    width: 99.9%!important;
     min-width: 70vmin!important;
 }
 
@@ -18,13 +18,31 @@ body{
     border-top-color: #0074d9;
 }
 
-.tooltip.show /* The CSS classes that the tooltip has */ {
+.tooltip.show {
     opacity: 1; 
 }
 
-.select2-container{
-    min-width:25vmin !important;
-}
 .select2-dropdown.select2-dropdown--below{
-    border-color:#dee2e6;
-} 
+    border-color:#0074d9;
+}
+
+.select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+    border-color: transparent transparent #0074d9 transparent !important;
+  }
+.select2-container--default .select2-selection--single .select2-selection__arrow b {
+border-color: #0074d9 transparent transparent transparent !important;
+}
+.select2-selection__clear{
+    color:#0074d9
+}
+
+input[type="number"]{
+    height: 29px!important;
+    width: 15vmin !important;
+    min-width: 6em !important;
+    -webkit-appearance: none;
+}
+
+.select2-container{
+    min-width: 25vmin !important;
+}
