@@ -1,5 +1,8 @@
 rebalanceamento_acoes/__pycache__
 rebalanceamento/__pycache__
+rebalanceamento_acoes/settingsDev.py
+rebalanceamento/migrations/
+db.sqlite3
 rebEnv/
 .vscode/
 static/
