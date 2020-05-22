@@ -28,7 +28,7 @@ ALLOWED_HOSTS = ['icaromarley5.pythonanywhere.com']
 
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True 
+CSRF_COOKIE_SECURE = True
 SECURE_REFERRER_POLICY = 'origin'
 SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_PRELOAD = True
@@ -100,12 +100,23 @@ WSGI_APPLICATION = 'rebalanceamento_acoes.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-        'ATOMIC_REQUESTS':True ,
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'icaromarley5$walletDB',
+        'USER': 'icaromarley5',
+        'PASSWORD': os.environ.get('DB_PASSWORD'),
+        'HOST': 'icaromarley5.mysql.pythonanywhere-services.com',
+        'OPTIONS': {
+            'sql_mode': 'STRICT_TRANS_TABLES',
+        },
     }
 }
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'stockData',
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators

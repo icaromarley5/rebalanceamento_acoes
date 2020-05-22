@@ -12,7 +12,7 @@ warnings.filterwarnings("ignore")
 
 def searchCache(f, id_cache, timeout):
     return cache.get_or_set(id_cache, f, timeout)
-    
+
 headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1)'\
     ' AppleWebKit/537.36 (KHTML, like Gecko)'\
@@ -24,7 +24,7 @@ def _getTickerListF():
             url = 'https://www.fundamentus.com.br/detalhes.php'
             r = requests.get(url, headers=headers)
             soup = BeautifulSoup(r.text)
-            
+
             tbody = soup.find('tbody')
             tickerList = [
                 a.text.strip() for a in tbody.findAll('a')
@@ -39,20 +39,20 @@ def getTickerList():
     return searchCache(_getTickerListF, id_cache, timeout)
 
 def _getTickerInfoF(ticker):
-    tickerInfo = None 
+    tickerInfo = None
     try:
         tickerInfoAux = {'ticker':ticker}
 
         url = 'https://www.fundamentus.com.br/detalhes.php?papel=' + ticker
         r = requests.get(url, headers=headers)
         soup = BeautifulSoup(r.text)
-        
+
         priceInfo = soup.find(
             'span',
             text='Cotação'
         ).find_next('td').text.replace(',','.')
         tickerInfoAux['price'] = float(priceInfo)
-        
+
         if tickerInfoAux['price'] == 0:
             raise Exception('Data incomplete')
 
@@ -61,7 +61,7 @@ def _getTickerInfoF(ticker):
             text='VPA'
         ).find_next('td').text.replace(',','.')
         tickerInfoAux['vpa'] = float(vpaInfo)
-        
+
         pvpInfo = soup.find(
             'span',
             text='P/VP'
@@ -76,7 +76,7 @@ def _getTickerInfoF(ticker):
 def getTickerInfo(ticker):
     timeout = 60 * 60 * 3 # 3h
     id_cache = ticker
-    
+
     return searchCache(
         lambda : _getTickerInfoF(ticker),
          id_cache,
@@ -89,7 +89,7 @@ def getAValidTickerCode(i=0):
         headers=headers,
     )
     soup = BeautifulSoup(r.text)
-    
+
     tbody = soup.find('tbody')
     tr = tbody.findAll('tr')[i]
     return tr.find('td').text.strip()
