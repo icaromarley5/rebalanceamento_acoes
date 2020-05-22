@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+from django.core.cache import cache
 
 import pandas as pd 
 
@@ -11,7 +12,6 @@ from rebalanceamento import views
 from rebalanceamento import planner
 from rebalanceamento import tickerData
 from rebalanceamento import forms
-from rebalanceamento.models import Stock
 
 testFilePath = 'rebalanceamento/testInputs/'
 
@@ -122,36 +122,44 @@ class TickerDataTestCase(TestCase):
         # pull first ticker from fundamentus
         
         ticker = tickerData.getAValidTickerCode()
-        tickerInfo = tickerData.findTickerInfo(ticker)
+        tickerInfo = tickerData.getTickerInfo(ticker)
 
-        self.assertTrue(set(['Ticker','VPA','PVP','Preço','Nome']) == set(tickerInfo.keys()))
-        self.assertTrue(type(tickerInfo['Preço']) == float)
-        self.assertTrue(type(tickerInfo['PVP']) == float)
-        self.assertTrue(type(tickerInfo['VPA']) == float)
-        self.assertTrue(tickerInfo['Nome'])
+        self.assertTrue(set(['ticker','vpa','pvp','price']) == set(tickerInfo.keys()))
+        self.assertTrue(type(tickerInfo['price']) == float)
+        self.assertTrue(type(tickerInfo['pvp']) == float)
+        self.assertTrue(type(tickerInfo['vpa']) == float)
 
     def test_findTickerInfoFail(self):
-        self.assertIsNone(tickerData.findTickerInfo(''))
-        self.assertIsNone(tickerData.findTickerInfo('QWEWEW'))
+        self.assertIsNone(tickerData.getTickerInfo(''))
+        self.assertIsNone(tickerData.getTickerInfo('QWEWEW'))
 
-class FormTestCase(TransactionTestCase):
-    def setUp(self):
-        Stock.objects.create(
-            ticker='TEST3',
-            name='Test SA',
-            price=1.1,
-            vpa=1.1,
-            pvp=1.1,
-            day=timezone.now().date()
-        )
-        Stock.objects.create(
-            ticker='TEST4',
-            name='Test2 SA',
-            price=1.1,
-            vpa=1.1,
-            pvp=1.1,
-            day=timezone.now().date()
-        )
+class FormTestCase(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        validTicker = tickerData.getAValidTickerCode(1)
+        data1 = {
+            'ticker': validTicker,
+            'price': 1.1,
+            'vpa': 1.1,
+            'pvp': 1.1,
+        }
+        validTicker = tickerData.getAValidTickerCode(2)
+        data2 = {
+            'ticker': validTicker,
+            'price': 1.1,
+            'vpa': 1.1,
+            'pvp': 1.1,
+        }
+        cache.set(data1['ticker'], data1, timeout=None)
+        cache.set(data2['ticker'], data2, timeout=None)
+        cls.stock1 = data1['ticker']
+        cls.stock2 = data2['ticker']
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        cache.clear()
 
     def test_WalletDataFormTypeSuccess(self):
         self.assertTrue(submitFile('valid.csv'))
@@ -199,10 +207,10 @@ class FormTestCase(TransactionTestCase):
             'form-INITIAL_FORMS': '2',
             'form-MIN_NUM_FORMS': '0',
             'form-MAX_NUM_FORMS': '1000',
-            'form-0-ticker': Stock.objects.first(),
+            'form-0-ticker': self.stock1,
             'form-0-quantity': '2', 
             'form-0-percent': '50',
-            'form-1-ticker': Stock.objects.last(),
+            'form-1-ticker': self.stock1,
             'form-1-quantity': '2', 
             'form-1-percent': '50',
         } 
@@ -217,10 +225,10 @@ class FormTestCase(TransactionTestCase):
             'form-INITIAL_FORMS': '2',
             'form-MIN_NUM_FORMS': '0',
             'form-MAX_NUM_FORMS': '1000',
-            'form-0-ticker': Stock.objects.first(),
+            'form-0-ticker': self.stock1,
             'form-0-quantity': '2', 
             'form-0-percent': '50',
-            'form-1-ticker': Stock.objects.last(),
+            'form-1-ticker': self.stock1,
             'form-1-quantity': '2', 
             'form-1-percent': '50',
         } 
@@ -234,10 +242,10 @@ class FormTestCase(TransactionTestCase):
             'form-INITIAL_FORMS': '2',
             'form-MIN_NUM_FORMS': '0',
             'form-MAX_NUM_FORMS': '1000',
-            'form-0-ticker': Stock.objects.first(),
+            'form-0-ticker': self.stock1,
             'form-0-quantity': '2', 
             'form-0-percent': '50',
-            'form-1-ticker': Stock.objects.last(),
+            'form-1-ticker': self.stock2,
             'form-1-quantity': '2', 
             'form-1-percent': '50',
         } 
@@ -252,10 +260,10 @@ class FormTestCase(TransactionTestCase):
             'form-INITIAL_FORMS': '2',
             'form-MIN_NUM_FORMS': '0',
             'form-MAX_NUM_FORMS': '1000',
-            'form-0-ticker': Stock.objects.first(),
+            'form-0-ticker': self.stock1,
             'form-0-quantity': '-2', 
             'form-0-percent': '50',
-            'form-1-ticker': Stock.objects.last(),
+            'form-1-ticker': self.stock2,
             'form-1-quantity': '2', 
             'form-1-percent': '50',
         } 
@@ -270,10 +278,10 @@ class FormTestCase(TransactionTestCase):
             'form-INITIAL_FORMS': '2',
             'form-MIN_NUM_FORMS': '0',
             'form-MAX_NUM_FORMS': '1000',
-            'form-0-ticker': Stock.objects.first(),
+            'form-0-ticker': self.stock1,
             'form-0-quantity': '2', 
             'form-0-percent': '50',
-            'form-1-ticker': Stock.objects.last(),
+            'form-1-ticker': self.stock2,
             'form-1-quantity': '2', 
             'form-1-percent': '51',
         } 
@@ -288,10 +296,10 @@ class FormTestCase(TransactionTestCase):
             'form-INITIAL_FORMS': '2',
             'form-MIN_NUM_FORMS': '0',
             'form-MAX_NUM_FORMS': '1000',
-            'form-0-ticker': Stock.objects.first(),
+            'form-0-ticker': self.stock1,
             'form-0-quantity': '2', 
             'form-0-percent': '50',
-            'form-1-ticker': Stock.objects.last(),
+            'form-1-ticker': self.stock2,
             'form-1-quantity': '2', 
             'form-1-percent': '-50',
         } 
@@ -306,9 +314,9 @@ class FormTestCase(TransactionTestCase):
             'form-INITIAL_FORMS': '2',
             'form-MIN_NUM_FORMS': '0',
             'form-MAX_NUM_FORMS': '1000',
-            'form-0-ticker': Stock.objects.first(),
+            'form-0-ticker': self.stock1,
             'form-0-quantity': '2', 
-            'form-1-ticker': Stock.objects.last(),
+            'form-1-ticker': self.stock2,
             'form-1-quantity': '2', 
             'form-1-percent': '-50',
         } 
@@ -323,10 +331,10 @@ class FormTestCase(TransactionTestCase):
             'form-INITIAL_FORMS': '2',
             'form-MIN_NUM_FORMS': '0',
             'form-MAX_NUM_FORMS': '1000',
-            'form-0-ticker': Stock.objects.first(),
+            'form-0-ticker': self.stock1,
             'form-0-quantity': '2', 
             'form-0-percent': '50',
-            'form-1-ticker': Stock.objects.last(),
+            'form-1-ticker': self.stock2,
             'form-1-quantity': '2', 
         } 
         form = walletForm(data)
@@ -341,7 +349,7 @@ class FormTestCase(TransactionTestCase):
             'form-INITIAL_FORMS': '2',
             'form-MIN_NUM_FORMS': '0',
             'form-MAX_NUM_FORMS': '1000',
-            'form-0-ticker': Stock.objects.first(),
+            'form-0-ticker': self.stock1,
             'form-0-quantity': '2', 
             'form-0-percent': '50',
             'form-1-ticker': '',
@@ -356,24 +364,30 @@ class ViewTestCase(TransactionTestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.client = Client()
-    
-    def setUp(self):
-        Stock.objects.create(
-            ticker='TEST3',
-            name='Test SA',
-            price=1.1,
-            vpa=1.1,
-            pvp=1.1,
-            day=timezone.now().date()
-        )
-        Stock.objects.create(
-            ticker='TEST4',
-            name='Test2 SA',
-            price=1.1,
-            vpa=1.1,
-            pvp=1.1,
-            day=timezone.now().date()
-        )
+        validTicker = tickerData.getAValidTickerCode(1)
+        data1 = {
+            'ticker': validTicker,
+            'price': 1.1,
+            'vpa': 1.1,
+            'pvp': 1.1,
+        }
+        validTicker = tickerData.getAValidTickerCode(2)
+        data2 = {
+            'ticker': validTicker,
+            'price': 1.1,
+            'vpa': 1.1,
+            'pvp': 1.1,
+        }
+        cache.set(data1['ticker'], data1, timeout=None)
+        cache.set(data2['ticker'], data2, timeout=None)
+        cls.stock1 = data1['ticker']
+        cls.stock2 = data2['ticker']
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        cache.clear()
+
 
     def test_homeGET(self):
         response = self.client.get(
@@ -386,7 +400,7 @@ class ViewTestCase(TransactionTestCase):
         self.assertTrue(
             'rebalanceamento/home.html' in templateList
         )
-
+    
     def test_homePOSTSuccess(self):
         data = {'file':getFileData('valid.csv')}
         response = self.client.post(
@@ -423,7 +437,7 @@ class ViewTestCase(TransactionTestCase):
         self.assertFalse(
             'rebalanceamento/confirmWallet.html' in templateList
         )
-
+    
     def test_confirmWalletPOSTSuccess(self):
         data = {
             'capital':100,
@@ -431,7 +445,7 @@ class ViewTestCase(TransactionTestCase):
             'form-INITIAL_FORMS': '1',
             'form-MIN_NUM_FORMS': '0',
             'form-MAX_NUM_FORMS': '1000',
-            'form-0-ticker': Stock.objects.first(),
+            'form-0-ticker': self.stock1,
             'form-0-quantity': '2', 
             'form-0-percent': '100',
         } 
@@ -443,7 +457,7 @@ class ViewTestCase(TransactionTestCase):
         self.assertTrue(
             'rebalanceamento/plotPlan.html' in templateList
         )
-
+    
     def test_confirmWalletPOSTFormFailure(self):
         data = {
             'capital': '0',
@@ -451,7 +465,7 @@ class ViewTestCase(TransactionTestCase):
             'form-INITIAL_FORMS': '1',
             'form-MIN_NUM_FORMS': '0',
             'form-MAX_NUM_FORMS': '1000',
-            'form-0-ticker': Stock.objects.first(),
+            'form-0-ticker': self.stock1,
             'form-0-quantity': '2', 
             'form-0-percent': '100',
         }
@@ -468,7 +482,7 @@ class ViewTestCase(TransactionTestCase):
         data = {
             'capital':100,
             'form-TOTAL_FORMS': '1',
-            'form-0-ticker': Stock.objects.first(),
+            'form-0-ticker': self.stock1,
             'form-0-quantity': '2', 
             'form-0-percent': '100',
         } 
@@ -501,7 +515,7 @@ class ViewTestCase(TransactionTestCase):
             'form-INITIAL_FORMS': '1',
             'form-MIN_NUM_FORMS': '0',
             'form-MAX_NUM_FORMS': '1000',
-            'form-0-ticker': Stock.objects.first(),
+            'form-0-ticker': self.stock1,
             'form-0-quantity': '2', 
             'form-0-percent': '100',
         } 
@@ -523,7 +537,7 @@ class ViewTestCase(TransactionTestCase):
             'form-INITIAL_FORMS': '1',
             'form-MIN_NUM_FORMS': '0',
             'form-MAX_NUM_FORMS': '1000',
-            'form-0-ticker': Stock.objects.first(),
+            'form-0-ticker': self.stock1,
             'form-0-quantity': '2', 
             'form-0-percent': '102',
         } 
@@ -543,7 +557,7 @@ class ViewTestCase(TransactionTestCase):
         data = {
             'capital':100,
             'form-TOTAL_FORMS': '1',
-            'form-0-ticker': Stock.objects.first(),
+            'form-0-ticker': self.stock1,
             'form-0-quantity': '2', 
             'form-0-percent': '100',
         } 
@@ -557,3 +571,4 @@ class ViewTestCase(TransactionTestCase):
         self.assertFalse(
             'rebalanceamento/confirmWallet.html' in templateList
         )
+    

@@ -10,7 +10,8 @@ import math
 import pandas as pd 
 import numpy as np
 
-from rebalanceamento.models import Stock
+
+from rebalanceamento import tickerData
 
 class WalletDataForm(forms.Form):
     file = forms.FileField(
@@ -74,10 +75,9 @@ class CapitalForm(forms.Form):
         return round(capital, 2)
 
 class WalletPlanningForm(forms.Form):
-    
-    ticker = forms.ModelChoiceField(
-        queryset=Stock.objects.all(),
-        widget=autocomplete.ModelSelect2(
+    ticker = autocomplete.Select2ListChoiceField(
+        choice_list=tickerData.getTickerList,
+        widget=autocomplete.ListSelect2(
             url='stock-autocomplete',
             attrs={
                 'class':'form-control p-0 m-0 border border-primary',
@@ -110,14 +110,20 @@ class WalletPlanningForm(forms.Form):
     
     def clean_ticker(self):
         ticker = self.cleaned_data['ticker']
-        try:
-            ticker = Stock.objects.get(ticker=ticker)
-        except Exception as e:
-            raise e
+        if ticker not in tickerData.getTickerList():
             self.add_error(
                 'ticker',
-                f'Ticker inválido: {ticker}'
+                'Ticker inválido'
             )
+        else:
+            data = tickerData.getTickerInfo(ticker)
+            if data:
+                ticker = data  
+            else:
+                self.add_error(
+                    'ticker',
+                    'Ticker possui informações incompletas'
+                )
         return ticker
 
 class WalletPlanningFormSet(BaseFormSet):

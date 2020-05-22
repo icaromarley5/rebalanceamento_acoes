@@ -3,17 +3,13 @@ from .forms import CapitalForm, WalletDataForm, createWalletPlanningForm
 
 from rebalanceamento import planner
 from rebalanceamento import dataPlots
+from rebalanceamento.tickerData import getTickerList
 
-from django.db.models import Q
 from dal import autocomplete
-
-from rebalanceamento.models import Stock
 
 import logging
 
 logger = logging.getLogger('rebalanceamento')
-
-from rebalanceamento import watcherDB
 
 import pandas as pd
 
@@ -50,13 +46,13 @@ def redirect404(request, *args, **kwargs):
     return redirect('home')
 
 def confirmWallet(request):    
-    if request.method == 'POST':       
+    if request.method == 'POST':   
         capitalForm = CapitalForm(request.POST)
         WalletForm = createWalletPlanningForm()
         walletForm = WalletForm(request.POST)
         try:
             valid = capitalForm.is_valid() and walletForm.is_valid()
-        except:
+        except Exception as e:
             valid = False
             capitalForm = CapitalForm()
             WalletForm = createWalletPlanningForm()
@@ -64,10 +60,10 @@ def confirmWallet(request):
         if valid:
             df = pd.DataFrame(walletForm.cleaned_data)
             df.columns = ['Ticker', 'Quantidade', 'PorcentagemAlvo']
-            df['VPA'] = df['Ticker'].apply(lambda x:x.vpa)
-            df['Preço'] = df['Ticker'].apply(lambda x:x.price)
-            df['PVP'] = df['Ticker'].apply(lambda x:x.pvp)
-            df['Ticker'] = df['Ticker'].apply(lambda x:x.ticker)
+            df['VPA'] = df['Ticker'].apply(lambda x:x['vpa'])
+            df['Preço'] = df['Ticker'].apply(lambda x:x['price'])
+            df['PVP'] = df['Ticker'].apply(lambda x:x['pvp'])
+            df['Ticker'] = df['Ticker'].apply(lambda x:x['ticker'])
             capital = capitalForm.cleaned_data['capital']
             plan, nonAllocatedCapital, waitFor = planner.computePlan(
                 pd.DataFrame(df), capital
@@ -78,6 +74,7 @@ def confirmWallet(request):
                 'nonAllocatedCapital': nonAllocatedCapital
             }
             data = {'waitFor':waitFor}
+
             data.update(dataPlots.createPlots(dataToPlot))
             data['capitalForm'] = capitalForm
             data['walletFormSet'] = walletForm
@@ -118,11 +115,6 @@ def redoWallet(request):
             )
     return redirect('home')
         
-class StockAutocomplete(autocomplete.Select2QuerySetView):
-    def get_queryset(self):
-        qs = Stock.objects.all()
-        if self.q:
-            qs = qs.filter(
-                Q(name__istartswith=self.q) \
-                | Q(ticker__istartswith=self.q))
-        return qs
+class StockAutocomplete(autocomplete.Select2ListView):
+    def get_list(self):
+        return getTickerList()
