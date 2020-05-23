@@ -24,7 +24,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['icaromarley5.pythonanywhere.com']
+ALLOWED_HOSTS = ['http://rebalanceamento-rebalanceamento.apps.us-east-1.starter.openshift-online.com']
 
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
