@@ -101,10 +101,10 @@ WSGI_APPLICATION = 'rebalanceamento_acoes.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'walletDB',
-        'USER': 'icaromarley5',
+        'NAME': os.environ.get('DB_NAME'),
+        'USER': os.environ.get('DB_USER'),
         'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': '172.30.78.61',
+        'HOST': os.environ.get('DB_HOST'),
         'OPTIONS': {
             'sql_mode': 'STRICT_TRANS_TABLES',
         },
