@@ -9,7 +9,6 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 
 import os
 import sys
-import json
 
 SERVER = 'runserver' in sys.argv
 
@@ -25,7 +24,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = json.loads(os.environ['ALLOWED_HOSTS'])
+ALLOWED_HOSTS = [os.environ.get('HOST_NAME')]
 
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
