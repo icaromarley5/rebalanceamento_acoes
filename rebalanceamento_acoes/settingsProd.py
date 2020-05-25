@@ -10,6 +10,9 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 import os
 import sys
 
+import mimetypes
+mimetypes.add_type("text/css", ".css", True)
+
 SERVER = 'runserver' in sys.argv
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -55,17 +58,18 @@ LOGGING = {
 INSTALLED_APPS = [
     'dal',
     'dal_select2',
+    'rebalanceamento',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rebalanceamento',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -153,7 +157,7 @@ TIME_ZONE = 'UTC'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
-STATIC_URL = '/static/'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_URL = '/static/'

@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+
 from django.core.cache import cache
 
 import pandas as pd 
@@ -12,6 +13,8 @@ from rebalanceamento import views
 from rebalanceamento import planner
 from rebalanceamento import tickerData
 from rebalanceamento import forms
+
+
 
 testFilePath = 'rebalanceamento/testInputs/'
 
@@ -571,4 +574,3 @@ class ViewTestCase(TransactionTestCase):
         self.assertFalse(
             'rebalanceamento/confirmWallet.html' in templateList
         )
-    
