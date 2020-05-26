@@ -40,12 +40,14 @@ Nele, apenas a maior cotação é utilizada como meio de ordenação e a porcent
 Similar ao rebalanceamento, o objetivo é comprar pelo menos 1 ação de cada ativo.
 
 ## Principais tecnologias utilizadas: 
+* Requests (Web Scraping para coletar dados de ações)
 * Django (servidor web)
 * Plotly (visualização de gráficos sobre a carteira)
 * Pandas e Numpy (manipulação de dados) 
 * Requests (Web Scraping para adquirir informações dos ativos)
-* Boostrap (aparência do site)
-* Jquery (recurso de autofill e adicionar/remover linhas dinamicamente) 
+* Boostrap4 e CSS (aparência do site)
+* Javascript e Jquery (recurso de autofill e adicionar/remover linhas de formulário de forma dinâmica) 
+* Mysql (armazena uma cache para evitar sobrecarregar sites externos na coleta de dados sobre ações)
 
 ## Telas da aplicação
 * Tela inicial
