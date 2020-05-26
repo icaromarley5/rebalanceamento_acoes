@@ -12,6 +12,7 @@ Essa aplicação é bastante útil para adpetos da filosofia Buy and Hold pois:
 3. mostra o patrimônio do acionista, calculado com um medidor mais estável que a precificação do mercado
 4. esconde os preços dos ativos no planejamento e no cálculo de patrimônio
 
+O projeto está hospedado no Heroku: https://rebalanceamento-acoes.herokuapp.com/
 ## Descrição detalhada
 A aplicação recebe um arquivo de tipo CSV, gerado a partir do site do CEI (Canal Eletrônico do Investidor). 
 Este arquivo é usado apenas para coletar quais ativos estão na carteira. O envio do arquivo é completamente opcional.
