@@ -304,7 +304,7 @@ class FormTestCase(TestCase):
             'form-0-percent': '50',
             'form-1-ticker': self.stock2,
             'form-1-quantity': '2', 
-            'form-1-percent': '-50',
+            'form-1-percent': '25',
         } 
         form = walletForm(data)
         self.assertFalse(form.is_valid())

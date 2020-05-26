@@ -150,6 +150,11 @@ class WalletPlanningFormSet(BaseFormSet):
                 percentLeft = math.floor(100 * percentLeft / len(notFilled))/100.0 
                 for form in notFilled:
                     form['percent'] = percentLeft
+            elif round(percentTotal, 2) != 100:
+                self.forms[0].add_error(
+                'percent',
+                f'Porcentagens não somam 100%. Soma calculada : {percentTotal:.2f}%'
+            )
     
 def createWalletPlanningForm(df=None):
     WalletFormSet = formset_factory(
