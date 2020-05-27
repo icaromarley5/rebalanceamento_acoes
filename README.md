@@ -6,7 +6,7 @@ O que ela faz:
 3. Faz uma comparação do desbalanceamento da carteira antes e depois do aporte
 4. Mostra o patrimônio do acionista antes e depois do aporte, através do múltiplo VPA (valor patrimonial por ação)
 
-Essa aplicação é bastante útil para adpetos da filosofia Buy and Hold pois:
+Essa aplicação é bastante útil para adpetos da filosofia Buy and Hold, pois:
 1. automatiza o planejamento dos aportes (sejam eles anuais, mensais ou semanais)
 2. analisa o desbalanceamento da carteira
 3. mostra o patrimônio do acionista, calculado com um medidor mais estável que a precificação do mercado
@@ -32,15 +32,14 @@ O rebalanceamento prioriza:
 1. o maior atraso em relação à porcentagem automaticamente definida (100/número de ações), aplicada sobre o total da carteira (desconsiderando aporte) 
 2. menor indicador PVP (Preço sobre valor patrimonial)
 
-Para cada ativo, o script tenta atingir essa porcentagem (caso esteja atrasado) ou pelo menos comprar 1 ativo.
+Para cada ativo, a aplicação tenta atingir essa porcentagem (caso esteja atrasado) ou pelo menos comprar 1 ativo.
 
 #### Como o investimento é calculado
-O investimento é feito com o restante do aporte, após um rebalanceamento que concluído com sucesso (compra de todos os ativos atrasados).
-Nele, apenas a maior cotação é utilizada como meio de ordenação e a porcentagem é aplicada apenas no restante do aporte.
-Similar ao rebalanceamento, o objetivo é comprar pelo menos 1 ação de cada ativo.
+O investimento é feito com o restante do aporte, se a etapa de rebalanceamento foi concluída com sucesso.
+
+Nesta etapa, apenas a maior cotação é utilizada para priorizar a compra. Novamente, a aplicação tenta comprar pelo menos 1 ação de cada ativo.
 
 ## Principais tecnologias utilizadas: 
-* Requests (Web Scraping para coletar dados de ações)
 * Django (servidor web)
 * Plotly (visualização de gráficos sobre a carteira)
 * Pandas e Numpy (manipulação de dados) 
