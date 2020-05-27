@@ -23,7 +23,7 @@
             </tbody>
         </table>
         <div class="input-group-sm">
-            {% if walletFormSet.errors %}
+            {% if walletFormSet.total_error_count > 0 %}
             <div class="errors border border-danger">
                 Alguns dados inseridos foram considerados inválidos.</br> 
                 Por favor, cheque cada campo.

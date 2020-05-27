@@ -410,12 +410,9 @@ class ViewTestCase(TransactionTestCase):
             reverse('home'), 
             data
         )
-        templateList = [
-            template.name \
-            for template in response.templates
-        ]
-        self.assertTrue(
-            'rebalanceamento/confirmWallet.html' in templateList
+        self.assertEqual(
+            response.context['walletFormSet'].total_form_count(), 
+            2,
         )
 
     def test_viewHomePOSTFailure(self):
@@ -423,12 +420,9 @@ class ViewTestCase(TransactionTestCase):
         response = self.client.post(
             reverse('home'), data
         )
-        templateList = [
-            template.name \
-             for template in response.templates
-        ]
-        self.assertTrue(
-            'rebalanceamento/confirmWallet.html' in templateList
+        self.assertEqual(
+            response.context['walletFormSet'].total_form_count(), 
+            1,
         )
 
     def test_confirmWalletGET(self):

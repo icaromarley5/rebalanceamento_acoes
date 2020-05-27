@@ -4,6 +4,12 @@ $(function () {
     $('[data-toggle="tooltip"]').tooltip()
 })
 
+// help Button
+$('.helpButton').click(function (){
+    $('.helpText').slideToggle(200)
+})
+
+
 //dynamic form 
 
 function updateForm(form, index, prefix) {
@@ -71,7 +77,7 @@ $('.delete-row').click(function() {
                     rowAux.find(
                         idPrefix + '-quantity').attr('value', parseInt(quant))
                     rowAux.find(
-                        idPrefix + '-percent').attr('value', parseInt(percent))
+                        idPrefix + '-percent').attr('value', parseFloat(percent))
 
                     //adding
                     rowAux.find('td').appendTo($(this))

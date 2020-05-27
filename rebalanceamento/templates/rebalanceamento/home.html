@@ -1,14 +1,21 @@
 {% extends 'rebalanceamento/base.html' %}
 
+{% load static %}
+
 {% block content %}
 
 <div align="center">
 	<p>
-		Para preencher automaticamente, carregue um arquivo "CSV" com sua carteira.
+		Se desejar preencher automaticamente os dados da sua carteira, carregue um arquivo "CSV" com seus ativos (o envio é opcional).<br><a type="button" class="helpButton btn btn-primary text-light btn-sm">?</a>
+		<div class="helpText container" style="display:none;">
+			<em>O arquivo pode ser preenchido <a href="{% static 'files/Modelo de Arquivo.csv' %}">manualmente</a> ou coletado do CEI.
+			Para coletar do CEI, acesse CEI/Carteira de ativos, copie a tabela (sem cabeçalho e rodapé) e salve com a extensão 'CSV'<br>
+			</em>
+		</div>
 	</p>
 	<form action="{% url 'home' %}" method="post"enctype="multipart/form-data">
 		{% csrf_token %}
-		<p class="w-25" data-toggle="tooltip" data-html="true" data-placement="top" title="<small>Ele pode ser gerado no CEI/Carteira de ativos. É só copiar o conteúdo da tabela (sem cabeçalho e rodapé) e salvar com a extensão 'CSV'.</small>">
+		<p class="w-25"	>
 			{{ form }}
 		</p>
 		<input class="btn btn-primary" type="submit" value="Continuar">

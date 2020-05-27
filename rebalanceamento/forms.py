@@ -30,15 +30,18 @@ class WalletDataForm(forms.Form):
             df = pd.DataFrame([])
             try:
                 data = pd.read_csv(csvFile,sep='\t')
-                expected_columns = [
-                    'Empresa', 'Tipo', 'Cód. de Negociação', 
-                    'Cod.ISIN', 'Preço (R$)*','Qtde.', 
-                    'Fator Cotação', 'Valor (R$)'
+                expectedColumns = [
+                    'Cód. de Negociação', 'Qtde.', 
                 ]
                 
+                expectedColumnsInside = set(
+                    expectedColumns).intersection(set(data.columns),
+                )
+                expectedColumnsInside = set(expectedColumns) == expectedColumnsInside
+
                 tickerRegex = '^[\dA-Z]{4}([345678]|11|12|13)$'
-                if all(data.columns == expected_columns) \
-                    and data['Qtde.'].dtype == np.dtype('int64') \
+                if expectedColumnsInside \
+                    and all(data['Qtde.'] >= 0) \
                     and all(data['Cód. de Negociação'].str.contains(
                         tickerRegex, regex=True)):
                             data = data[['Cód. de Negociação', 'Qtde.']]
