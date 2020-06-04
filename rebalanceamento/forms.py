@@ -3,6 +3,7 @@ from django.forms import formset_factory
 from django.forms import BaseFormSet
 
 from django.core.validators import FileExtensionValidator
+from django.core.exceptions import ValidationError
 
 from dal import autocomplete
 
@@ -10,13 +11,19 @@ import math
 import pandas as pd 
 import numpy as np
 
-
 from rebalanceamento import tickerData
+
+def validate_file_size(value):
+    filesize = value.size
+    if filesize > 1000000:
+        raise ValidationError("O tamanho limite para o envio é de 1MB")
+    else:
+        return value
 
 class WalletDataForm(forms.Form):
     file = forms.FileField(
         required=False,
-        validators=[FileExtensionValidator(['csv'])], 
+        validators=[FileExtensionValidator(['csv']), validate_file_size], 
         label='Arquivo CSV',
         widget=forms.FileInput(
             attrs={
@@ -26,6 +33,11 @@ class WalletDataForm(forms.Form):
     )
  
     def clean_file(self):
+
+
+
+
+
         def processCSV(csvFile):
             df = pd.DataFrame([])
             try:

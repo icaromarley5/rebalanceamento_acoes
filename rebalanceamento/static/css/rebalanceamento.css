@@ -25,8 +25,8 @@ body{
 }
 
 /* forms */
-.select2-dropdown.select2-dropdown--below{
-    border-color:#0074d9;
+.select2-dropdown--below, .select2-dropdown--above{
+    border-color:#0074d9 !important;
 }
 
 .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {

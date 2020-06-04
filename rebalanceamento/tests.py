@@ -14,8 +14,6 @@ from rebalanceamento import planner
 from rebalanceamento import tickerData
 from rebalanceamento import forms
 
-
-
 testFilePath = 'rebalanceamento/testInputs/'
 
 def getFileData(fileName):
@@ -25,6 +23,10 @@ def getFileData(fileName):
 def submitFile(fileName):
     fileData = getFileData(fileName)
     return forms.WalletDataForm({},{'file':fileData}).is_valid()
+
+class MockFile():
+    def __init__(self, size):
+        self.size = size 
 
 # Create your tests here.
 class PlannerTestCase(TestCase):
@@ -143,19 +145,23 @@ class FormTestCase(TestCase):
         validTicker = tickerData.getAValidTickerCode(1)
         data1 = {
             'ticker': validTicker,
-            'price': 1.1,
             'vpa': 1.1,
             'pvp': 1.1,
         }
         validTicker = tickerData.getAValidTickerCode(2)
         data2 = {
             'ticker': validTicker,
-            'price': 1.1,
+
             'vpa': 1.1,
             'pvp': 1.1,
         }
-        cache.set(data1['ticker'], data1, timeout=None)
-        cache.set(data2['ticker'], data2, timeout=None)
+        cache.set(data1['ticker'] + 'info', data1, timeout=None)
+        cache.set(data1['ticker'] + 'price', 1.1, timeout=None)
+        data1['price'] = 1.1
+        cache.set(data2['ticker'] + 'info', data2, timeout=None)
+        cache.set(data2['ticker'] + 'price', 1.1, timeout=None)
+        data2['price'] = 1.1
+        
         cls.stock1 = data1['ticker']
         cls.stock2 = data2['ticker']
 
@@ -163,6 +169,21 @@ class FormTestCase(TestCase):
     def tearDownClass(cls):
         super().tearDownClass()
         cache.clear()
+
+    def test_validate_file_size(self):
+        self.assertRaises(
+            ValidationError,
+            lambda : forms.validate_file_size(
+                MockFile(1000000 + 1), # more than 1 mb
+            ),
+        )
+        valueLess1MB = 1000
+        self.assertEqual(
+            valueLess1MB,
+            forms.validate_file_size(
+                MockFile(valueLess1MB), 
+            ).size,
+        )
 
     def test_WalletDataFormTypeSuccess(self):
         self.assertTrue(submitFile('valid.csv'))
@@ -370,19 +391,22 @@ class ViewTestCase(TransactionTestCase):
         validTicker = tickerData.getAValidTickerCode(1)
         data1 = {
             'ticker': validTicker,
-            'price': 1.1,
             'vpa': 1.1,
             'pvp': 1.1,
         }
         validTicker = tickerData.getAValidTickerCode(2)
         data2 = {
             'ticker': validTicker,
-            'price': 1.1,
             'vpa': 1.1,
             'pvp': 1.1,
         }
-        cache.set(data1['ticker'], data1, timeout=None)
-        cache.set(data2['ticker'], data2, timeout=None)
+        cache.set(data1['ticker'] + 'info', data1, timeout=None)
+        cache.set(data1['ticker'] + 'price', 1.1, timeout=None)
+        data1['price'] = 1.1
+        cache.set(data2['ticker'] + 'info', data2, timeout=None)
+        cache.set(data2['ticker'] + 'price', 1.1, timeout=None)
+        data2['price'] = 1.1
+        
         cls.stock1 = data1['ticker']
         cls.stock2 = data2['ticker']
 

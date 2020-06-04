@@ -51,9 +51,8 @@ def _getTickerInfoF(ticker):
             'span',
             text='Cotação'
         ).find_next('td').text.replace(',','.')
-        tickerInfoAux['price'] = float(priceInfo)
 
-        if tickerInfoAux['price'] == 0:
+        if float(priceInfo) == 0:
             raise Exception('Data incomplete')
 
         vpaInfo = soup.find(
@@ -73,15 +72,47 @@ def _getTickerInfoF(ticker):
         pass
     return tickerInfo
 
-def getTickerInfo(ticker):
-    timeout = 60 * 60 * 3 # 3h
-    id_cache = ticker
+def _getTickerPriceF(ticker):
+    price = None
+    try:
+        url = f'https://statusinvest.com.br/acoes/{ticker.lower()}'
+        r = requests.get(url, headers=headers)
+        soup = BeautifulSoup(r.text)
 
-    return searchCache(
+        price = soup.find(
+            'div',
+            title='Valor atual do ativo'
+        ).find_next('strong').text.replace(',','.')
+        price = float(price)
+
+    except Exception as e:
+        pass
+    return price
+
+def getTickerInfo(ticker):
+    timeout = 60 * 60 * 24 * 7 # 1w
+    id_cache = ticker + 'info'
+
+    info = searchCache(
         lambda : _getTickerInfoF(ticker),
          id_cache,
          timeout
     )
+
+    if info:
+        timeout = 60 * 20 # 20 min
+        id_cache = ticker + 'price'
+
+        price = searchCache(
+            lambda : _getTickerPriceF(ticker),
+            id_cache,
+            timeout
+        )
+        if price:
+            info['price'] = price
+        else:
+            info = None
+    return info
 
 def getAValidTickerCode(i=0):
     r = requests.get(
