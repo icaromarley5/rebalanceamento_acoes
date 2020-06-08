@@ -1,3 +1,5 @@
-Empresa	Tipo	Cód. de Negociação	Cod.ISIN	Preço (R$)*	Qtde.	Fator Cotação	Valor (R$)
-TEST S/A	ON	TEST3	BRABEVACNOR1	11,45	55	1	629,75
-TEST S/A	ON NM	TEST4	BRB3SAACNOR6	39,31	17	1	668,27
+Ticker	Quantidade	Porcentagem alvo
+ITUB3	17	25.0
+ABEV3	17	25.0
+EGIE3	4	25.0
+OIBR4	55	25.0

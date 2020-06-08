@@ -208,7 +208,12 @@ class FormTestCase(TestCase):
 
     def test_createWalletPlanningForm(self):
         walletForm = forms.createWalletPlanningForm(
-            pd.DataFrame({'Ticker':['A','B'], 'Quantidade':[0, 0]})
+            pd.DataFrame({
+                    'Ticker':['A','B'], 
+                    'Quantidade':[0, 0],
+                    'Porcentagem alvo':[50, 50],
+                },
+            ),
         )
 
         fieldList = [
@@ -436,7 +441,7 @@ class ViewTestCase(TransactionTestCase):
         )
         self.assertEqual(
             response.context['walletFormSet'].total_form_count(), 
-            2,
+            4,
         )
 
     def test_viewHomePOSTFailure(self):

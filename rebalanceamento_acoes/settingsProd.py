@@ -44,10 +44,14 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
         },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': 'log.log',
+        },
     },
     'loggers': {
         'rebalanceamento': {
-            'handlers': ['console'],
+            'handlers': ['file', 'console'],
             'level': 'INFO',
         },
     },

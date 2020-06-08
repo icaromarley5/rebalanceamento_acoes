@@ -33,17 +33,12 @@ class WalletDataForm(forms.Form):
     )
  
     def clean_file(self):
-
-
-
-
-
         def processCSV(csvFile):
             df = pd.DataFrame([])
             try:
                 data = pd.read_csv(csvFile,sep='\t')
                 expectedColumns = [
-                    'Cód. de Negociação', 'Qtde.', 
+                    'Ticker', 'Quantidade', 'Porcentagem alvo', 
                 ]
                 
                 expectedColumnsInside = set(
@@ -51,18 +46,25 @@ class WalletDataForm(forms.Form):
                 )
                 expectedColumnsInside = set(expectedColumns) == expectedColumnsInside
 
+                def remove_fraction(ticker):
+                    if ticker[-1] == 'F':
+                        ticker = ticker[:-1]
+                    return ticker
+                data['Ticker'] = data['Ticker'].apply(remove_fraction)
+
                 tickerRegex = '^[\dA-Z]{4}([345678]|11|12|13)$'
                 if expectedColumnsInside \
-                    and all(data['Qtde.'] >= 0) \
-                    and all(data['Cód. de Negociação'].str.contains(
+                    and all(data['Quantidade'] >= 0) \
+                    and all(data['Ticker'].str.contains(
                         tickerRegex, regex=True)):
-                            data = data[['Cód. de Negociação', 'Qtde.']]
-                            data.columns = ['Ticker', 'Quantidade']
+                            data = data[['Ticker', 'Quantidade', 'Porcentagem alvo']]
                             data['Quantidade'] = data['Quantidade'].astype(int) 
+                            data['Porcentagem alvo'] = data['Porcentagem alvo'].astype(float) 
                             df = data
                 else:
                     raise Exception('Unexpected data')
             except Exception as e:
+                # raise e
                 pass
             return df
 
@@ -180,11 +182,10 @@ def createWalletPlanningForm(df=None):
     formset = WalletFormSet
     if df is not None:
         nTickers = df.shape[0]
-        percent = round(100 / nTickers, 2)
         initialData = [{ 
                 'ticker': df['Ticker'].iloc[i],
                 'quantity': df['Quantidade'].iloc[i],
-                'percent':percent
+                'percent': df['Porcentagem alvo'].iloc[i],
             } \
             for i in range(nTickers)
         ]

@@ -21,7 +21,8 @@ def home(request):
         else:
             dataDict = {
                 'Ticker': [''],
-                'Quantidade': [0]
+                'Quantidade': [0],
+                'Porcentagem alvo': [100],
             }
             data = pd.DataFrame(dataDict)
         form = createWalletPlanningForm(data)
