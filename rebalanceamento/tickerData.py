@@ -7,6 +7,8 @@ from bs4 import BeautifulSoup
 
 from django.core.cache import cache
 
+import logging
+
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -30,7 +32,7 @@ def _getTickerListF():
                 a.text.strip() for a in tbody.findAll('a')
             ]
         except Exception as e:
-            pass
+            logging.error(e)
         return tickerList
 
 def getTickerList():
