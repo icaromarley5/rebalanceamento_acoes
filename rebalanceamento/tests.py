@@ -129,7 +129,8 @@ class TickerDataTestCase(TestCase):
         ticker = tickerData.getAValidTickerCode()
         tickerInfo = tickerData.getTickerInfo(ticker)
 
-        self.assertTrue(set(['ticker','vpa','pvp','price']) == set(tickerInfo.keys()))
+        self.assertTrue(
+            set(['price', 'ticker', 'vpa', 'pvp']) == set(tickerInfo.keys()))
         self.assertTrue(type(tickerInfo['price']) == float)
         self.assertTrue(type(tickerInfo['pvp']) == float)
         self.assertTrue(type(tickerInfo['vpa']) == float)

@@ -1,13 +1,12 @@
 """
-Functions for collecting ticket data over the web
+Functions for collecting ticket data over the web.
 """
 
 import requests
 from bs4 import BeautifulSoup
+import json
 
 from django.core.cache import cache
-
-import logging
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -21,22 +20,48 @@ headers = {
     ' Chrome/39.0.2171.95 Safari/537.36'}
 
 def _getTickerListF():
-        tickerList = []
-        try:
-            url = 'https://www.fundamentus.com.br/detalhes.php'
-            r = requests.get(url, headers=headers)
-            soup = BeautifulSoup(r.text)
+    tickerList = []
+    try:
+        url = ('https://statusinvest.com.br/category/advancedsearchresult'
+            '?search=%7B%22Sector%22%3A%22%22%2C%22SubSector%22%3A%22%22%2'
+            'C%22Segment%22%3A%22%22%2C%22my_range%22%3A%220%3B25%22%2C%22'
+            'dy%22%3A%7B%22Item1%22%3Anull%2C%22Item2%22%3Anull%7D%2C%22p_L'
+            '%22%3A%7B%22Item1%22%3Anull%2C%22Item2%22%3Anull%7D%2C%22p_VP%2'
+            '2%3A%7B%22Item1%22%3Anull%2C%22Item2%22%3Anull%7D%2C%22p_Ativo%'
+            '22%3A%7B%22Item1%22%3Anull%2C%22Item2%22%3Anull%7D%2C%22margemBr'
+            'uta%22%3A%7B%22Item1%22%3Anull%2C%22Item2%22%3Anull%7D%2C%22marg'
+            'emEbit%22%3A%7B%22Item1%22%3Anull%2C%22Item2%22%3Anull%7D%2C%22ma'
+            'rgemLiquida%22%3A%7B%22Item1%22%3Anull%2C%22Item2%22%3Anull%7D%2C%'
+            '22p_Ebit%22%3A%7B%22Item1%22%3Anull%2C%22Item2%22%3Anull%7D%2C%22e'
+            'V_Ebit%22%3A%7B%22Item1%22%3Anull%2C%22Item2%22%3Anull%7D%2C%22divi'
+            'daLiquidaEbit%22%3A%7B%22Item1%22%3Anull%2C%22Item2%22%3Anull%7D%2C%'
+            '22dividaliquidaPatrimonioLiquido%22%3A%7B%22Item1%22%3Anull%2C%22Item'
+            '2%22%3Anull%7D%2C%22p_SR%22%3A%7B%22Item1%22%3Anull%2C%22Item2%22%3'
+            'Anull%7D%2C%22p_CapitalGiro%22%3A%7B%22Item1%22%3Anull%2C%22Item2%22'
+            '%3Anull%7D%2C%22p_AtivoCirculante%22%3A%7B%22Item1%22%3Anull%2C%22It'
+            'em2%22%3Anull%7D%2C%22roe%22%3A%7B%22Item1%22%3Anull%2C%22Item2%22%3A'
+            'null%7D%2C%22roic%22%3A%7B%22Item1%22%3Anull%2C%22Item2%22%3Anull%7D%2C'
+            '%22roa%22%3A%7B%22Item1%22%3Anull%2C%22Item2%22%3Anull%7D%2C%22liquidezC'
+            'orrente%22%3A%7B%22Item1%22%3Anull%2C%22Item2%22%3Anull%7D%2C%22pl_Ativo%'
+            '22%3A%7B%22Item1%22%3Anull%2C%22Item2%22%3Anull%7D%2C%22passivo_Ativo%22%3'
+            'A%7B%22Item1%22%3Anull%2C%22Item2%22%3Anull%7D%2C%22giroAtivos%22%3A%7B%22I'
+            'tem1%22%3Anull%2C%22Item2%22%3Anull%7D%2C%22receitas_Cagr5%22%3A%7B%22Item1'
+            '%22%3Anull%2C%22Item2%22%3Anull%7D%2C%22lucros_Cagr5%22%3A%7B%22Item1%22%3'
+            'Anull%2C%22Item2%22%3Anull%7D%2C%22liquidezMediaDiaria%22%3A%7B%22Item1%22'
+            '%3Anull%2C%22Item2%22%3Anull%7D%7D&CategoryType=1'
+        )
+        r = requests.get(url, headers=headers)
 
-            tbody = soup.find('tbody')
-            tickerList = [
-                a.text.strip() for a in tbody.findAll('a')
-            ]
-        except Exception as e:
-            logging.error(e)
-        return tickerList
+        result = json.loads(r.text)
+        tickerList = [
+            company['ticker'] for company in result
+        ]
+    except Exception as e:
+        pass
+    return tickerList
 
 def getTickerList():
-    timeout = 60 * 60 * 24 * 2 # 2 day
+    timeout = 60 * 60 * 24 * 14 # 14 days
     id_cache = 'tickerList'
     return searchCache(_getTickerListF, id_cache, timeout)
 
@@ -45,28 +70,20 @@ def _getTickerInfoF(ticker):
     try:
         tickerInfoAux = {'ticker':ticker}
 
-        url = 'https://www.fundamentus.com.br/detalhes.php?papel=' + ticker
+        url = f'https://statusinvest.com.br/acoes/{ticker.lower()}'
         r = requests.get(url, headers=headers)
         soup = BeautifulSoup(r.text)
 
-        priceInfo = soup.find(
-            'span',
-            text='Cotação'
-        ).find_next('td').text.replace(',','.')
-
-        if float(priceInfo) == 0:
-            raise Exception('Data incomplete')
-
         vpaInfo = soup.find(
-            'span',
+            'h3',
             text='VPA'
-        ).find_next('td').text.replace(',','.')
+        ).find_next('strong').text.replace(',','.')
         tickerInfoAux['vpa'] = float(vpaInfo)
 
         pvpInfo = soup.find(
-            'span',
+            'h3',
             text='P/VP'
-        ).find_next('td').text.replace(',','.')
+        ).find_next('strong').text.replace(',','.')
         tickerInfoAux['pvp'] = float(pvpInfo)
 
         tickerInfo = tickerInfoAux
@@ -86,7 +103,6 @@ def _getTickerPriceF(ticker):
             title='Valor atual do ativo'
         ).find_next('strong').text.replace(',','.')
         price = float(price)
-
     except Exception as e:
         pass
     return price
@@ -102,7 +118,7 @@ def getTickerInfo(ticker):
     )
 
     if info:
-        timeout = 60 * 20 # 20 min
+        timeout = 60 * 60 # 1 h
         id_cache = ticker + 'price'
 
         price = searchCache(
@@ -118,11 +134,11 @@ def getTickerInfo(ticker):
 
 def getAValidTickerCode(i=0):
     r = requests.get(
-        'https://www.fundamentus.com.br/detalhes.php',
+        'https://statusinvest.com.br/',
         headers=headers,
     )
     soup = BeautifulSoup(r.text)
 
-    tbody = soup.find('tbody')
-    tr = tbody.findAll('tr')[i]
-    return tr.find('td').text.strip()
+    ticker = soup.find('h4',
+        {'title':'ticker/código do ativo'}).text.split()[0].strip()
+    return ticker
